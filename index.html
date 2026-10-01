@@ -3,89 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyPOS - မြန်မာ့လက်လီဆိုင်သုံး POS</title>
+    <title>SaaS Dashboard - Business Management System</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: #f8fafc; color: #1e293b; padding: 15px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; color: #0284c7; }
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .product-btn { background: #e0f2fe; border: 1px solid #bae6fd; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: bold; color: #0369a1; }
-        .product-btn:active { background: #bae6fd; }
-        .cart-list { margin-top: 10px; max-height: 150px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-        .cart-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .total-box { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; margin-top: 15px; border-top: 2px solid #e2e8f0; padding-top: 10px; }
-        .checkout-btn { width: 100%; background: #22c55e; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 480px; }
+        
+        /* Card & UI Styles */
+        .card { background: #1e293b; padding: 25px; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        h2 { color: #38bdf8; margin-bottom: 20px; font-size: 22px; text-align: center; }
+        
+        /* Form Controls */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; font-size: 16px; }
+        input:focus { outline: none; border-color: #38bdf8; }
+        
+        /* Buttons */
+        .btn { width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn:hover { background: #0ea5e9; }
+        
+        /* Dashboard Layout */
+        .hidden { display: none; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: font-size: 12px; font-weight: bold; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155; }
+        .stat-card h4 { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        .stat-card p { font-size: 18px; font-weight: bold; color: #38bdf8; }
+        
+        .error-msg { color: #ef4444; font-size: 13px; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>📦 EasyPOS (Mini)</h1>
-        <span style="font-size: 14px; color: #64748b;">ဆိုင်ရှင် - ကိုယ်တိုင်</span>
-    </div>
+    <div class="container">
+        
+        <!-- Login Section -->
+        <div id="loginSection" class="card">
+            <h2>🔐 Business Login</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="admin ဟုထည့်ပါ">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="1234 ဟုထည့်ပါ">
+            </div>
+            <button class="btn" onclick="handleLogin()">ဝင်ရောက်မည် (Login)</button>
+            <p id="errorMsg" class="error-msg"></p>
+        </div>
 
-    <!-- Products Section -->
-    <div class="card">
-        <h3>ပစ္စည်းများ ရွေးချယ်ရန်</h3>
-        <div class="product-grid" style="margin-top: 10px;">
-            <div class="product-btn" onclick="addToCart('ရေသန့်', 500)">ရေသန့် (500 Ks)</div>
-            <div class="product-btn" onclick="addToCart('လက်ဖက်ရည်', 1000)">လက်ဖက်ရည် (1000 Ks)</div>
-            <div class="product-btn" onclick="addToCart('ခေါက်ဆွဲခြောက်', 800)">ခေါက်ဆွဲခြောက် (800 Ks)</div>
-            <div class="product-btn" onclick="addToCart('ကော်ဖီမွှေး', 1200)">ကော်ဖီမွှေး (1200 Ks)</div>
-        </div>
-    </div>
+        <!-- Dashboard Section (Initially Hidden) -->
+        <div id="dashSection" class="card hidden">
+            <div class="dash-header">
+                <div>
+                    <h3 style="color: #38bdf8;">📊 ဧရာဝတီ ဆိုင်ခွဲ (Dashboard)</h3>
+                    <p style="font-size: 12px; color: #94a3b8;">Welcome back, Admin</p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
 
-    <!-- Cart & Checkout Section -->
-    <div class="card">
-        <h3>အရောင်းခြင်းတောင်း (Cart)</h3>
-        <div class="cart-list" id="cartList">
-            <p style="color: #94a3b8; font-size: 14px; text-align: center;">ပစ္စည်း ရွေးချယ်ထားခြင်း မရှိသေးပါ။</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>ယနေ့ အရောင်း</h4>
+                    <p>350,000 Ks</p>
+                </div>
+                <div class="stat-card">
+                    <h4>စုစုပေါင်း ပစ္စည်း</h4>
+                    <p>124 မျိုး</p>
+                </div>
+                <div class="stat-card">
+                    <h4>ဖောက်သည် အသစ်</h4>
+                    <p>12 ယောက်</p>
+                </div>
+                <div class="stat-card">
+                    <h4>အမြတ်ငွေ (ခန့်မှန်း)</h4>
+                    <p>85,000 Ks</p>
+                </div>
+            </div>
+
+            <div style="background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155;">
+                <h4 style="font-size: 14px; margin-bottom: 10px; color: #cbd5e1;">နောက်ဆုံး လုပ်ဆောင်ချက်များ</h4>
+                <p style="font-size: 13px; color: #64748b; text-align: center; padding: 10px;">အရောင်းအဝယ် မှတ်တမ်းအသစ်များ မရှိသေးပါ။</p>
+            </div>
         </div>
-        <div class="total-box">
-            <span>စုစုပေါင်း:</span>
-            <span id="totalPrice">0 Ks</span>
-        </div>
-        <button class="checkout-btn" onclick="checkout()">ငွေရှင်းမည် (Checkout)</button>
+
     </div>
 
     <script>
-        let cart = [];
-        let total = 0;
+        function handleLogin() {
+            let user = document.getElementById('username').value.trim();
+            let pass = document.getElementById('password').value.trim();
+            let errorMsg = document.getElementById('errorMsg');
 
-        function addToCart(name, price) {
-            cart.push({name, price});
-            updateCart();
+            // ယာယီစစ်ဆေးချက် (Testing Credentials)
+            if (user === 'admin' && pass === '1234') {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashSection').classList.remove('hidden');
+                errorMsg.innerText = '';
+            } else {
+                errorMsg.innerText = 'Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။';
+            }
         }
 
-        function updateCart() {
-            let cartList = document.getElementById('cartList');
-            let totalPriceEl = document.getElementById('totalPrice');
-            
-            if (cart.length === 0) {
-                cartList.innerHTML = '<p style="color: #94a3b8; font-size: 14px; text-align: center;">ပစ္စည်း ရွေးချယ်ထားခြင်း မရှိသေးပါ။</p>';
-                totalPriceEl.innerText = '0 Ks';
-                return;
-            }
-
-            cartList.innerHTML = '';
-            total = 0;
-            cart.forEach((item, index) => {
-                total += item.price;
-                cartList.innerHTML += `<div class="cart-item"><span>${item.name}</span><span>${item.price} Ks</span></div>`;
-            });
-            totalPriceEl.innerText = total.toLocaleString() + ' Ks';
-        }
-
-        function checkout() {
-            if (cart.length === 0) {
-                alert('ခြင်းတောင်းထဲတွင် ပစ္စည်းမရှိပါ။');
-                return;
-            }
-            alert('အရောင်းအောင်မြင်ပါသည်! စုစုပေါင်းငွေ - ' + total.toLocaleString() + ' Ks');
-            cart = [];
-            updateCart();
+        function handleLogout() {
+            document.getElementById('dashSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
         }
     </script>
 
