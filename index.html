@@ -3,45 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise ERP System - SaaS</title>
+    <title>RetailPro ERP - Business Management SaaS</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 10px; }
         
-        .container { width: 100%; max-width: 480px; padding: 15px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 14px; border: 1px solid #334155; }
+        .container { width: 100%; max-width: 500px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h2 { color: #38bdf8; margin-bottom: 20px; text-align: center; font-size: 20px; }
         
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; font-size: 16px; }
-        input:focus { outline: none; border-color: #38bdf8; }
+        label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: white; font-size: 15px; }
+        input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
-        .btn { width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn { width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 11px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn:hover { background: #0ea5e9; }
         
         .hidden { display: none; }
-        .error-msg { color: #ef4444; font-size: 13px; text-align: center; margin-top: 10px; }
+        .error-msg { color: #ef4444; font-size: 12px; text-align: center; margin-top: 8px; }
 
         /* Dashboard Layout */
-        #dashSection { max-width: 600px; width: 100%; padding: 20px; }
-        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-        .logout-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        #dashContainer { max-width: 600px; width: 100%; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
         
-        /* Module Sections */
-        .module-section { margin-bottom: 20px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; overflow: hidden; }
-        .module-title { background: #334155; padding: 12px 15px; font-size: 16px; font-weight: bold; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .sub-menu { padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #1e293b; }
-        .sub-btn { background: #0f172a; border: 1px solid #475569; padding: 10px; border-radius: 6px; color: #f8fafc; font-size: 13px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .sub-btn:hover { background: #38bdf8; color: #0f172a; border-color: #38bdf8; font-weight: bold; }
+        .module-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        .module-title { background: #334155; padding: 10px 12px; font-size: 14px; font-weight: bold; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }
+        .module-body { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        
+        .action-btn { background: #1e293b; border: 1px solid #475569; padding: 10px; border-radius: 6px; color: #f8fafc; font-size: 12px; text-align: center; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .action-btn:hover { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+
+        /* Active View Panels */
+        .panel-view { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; margin-top: 10px; }
+        .back-btn { background: #475569; color: white; border: none; padding: 6px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- Login Screen -->
+    <!-- 1. LOGIN SCREEN -->
     <div class="container" id="loginContainer">
         <div class="card">
-            <h2>🏢 Enterprise ERP Login</h2>
+            <h2>🛒 RetailPro ERP Login</h2>
             <div class="form-group">
                 <label>Username</label>
                 <input type="text" id="username" placeholder="admin ဟုထည့်ပါ">
@@ -50,51 +54,62 @@
                 <label>Password</label>
                 <input type="password" id="password" placeholder="1234 ဟုထည့်ပါ">
             </div>
-            <button class="btn" onclick="handleLogin()">Login ဝင်မည်</button>
+            <button class="btn" onclick="handleLogin()">စနစ်သို့ ဝင်မည်</button>
             <p id="errorMsg" class="error-msg"></p>
         </div>
     </div>
 
-    <!-- Dashboard Screen -->
+    <!-- 2. MAIN DASHBOARD SCREEN -->
     <div class="container hidden" id="dashContainer">
         <div class="card">
             <div class="dash-header">
                 <div>
-                    <h3 style="color: #38bdf8; font-size: 18px;">📊 ERP System Dashboard</h3>
-                    <p style="font-size: 12px; color: #94a3b8;">Role: Super Admin / Business Owner</p>
+                    <h3 style="color: #38bdf8; font-size: 16px;">📊 Retail ERP Dashboard</h3>
+                    <p style="font-size: 11px; color: #94a3b8;">Store: General Retail Shop</p>
                 </div>
                 <button class="logout-btn" onclick="handleLogout()">Logout</button>
             </div>
 
-            <!-- 1. SALES MODULE -->
-            <div class="module-section">
-                <div class="module-title">📦 Sales (အရောင်းပိုင်း)</div>
-                <div class="sub-menu">
-                    <div class="sub-btn" onclick="alert('Sale Invoice မျက်နှာပြင်သို့ သွားမည်')">Sale Invoice</div>
-                    <div class="sub-btn" onclick="alert('Sale Order မျက်နှာပြင်သို့ သွားမည်')">Sale Order</div>
-                    <div class="sub-btn" onclick="alert('Sale Return မျက်နှာပြင်သို့ သွားမည်')">Sale Return</div>
+            <!-- Main Menu Modules -->
+            <div id="mainMenu">
+                <!-- SALES MODULE -->
+                <div class="module-card">
+                    <div class="module-title">📦 Sales Management (အရောင်းပိုင်း)</div>
+                    <div class="module-body">
+                        <div class="action-btn" onclick="openPanel('saleInvoice')">Sale Invoice</div>
+                        <div class="action-btn" onclick="openPanel('saleOrder')">Sale Order</div>
+                        <div class="action-btn" onclick="openPanel('saleReturn')">Sale Return</div>
+                        <div class="action-btn" onclick="openPanel('salesReport')">Sales Report</div>
+                    </div>
+                </div>
+
+                <!-- PURCHASE MODULE -->
+                <div class="module-card">
+                    <div class="module-title">🛒 Purchase Management (အဝယ်ပိုင်း)</div>
+                    <div class="module-body">
+                        <div class="action-btn" onclick="openPanel('purchaseInvoice')">Purchase Invoice</div>
+                        <div class="action-btn" onclick="openPanel('purchaseOrder')">Purchase Order</div>
+                        <div class="action-btn" onclick="openPanel('purchaseReturn')">Purchase Return</div>
+                        <div class="action-btn" onclick="openPanel('purchaseReport')">Purchase Report</div>
+                    </div>
+                </div>
+
+                <!-- SETUP & MASTERS MODULE -->
+                <div class="module-card">
+                    <div class="module-title">⚙️ Setup & Master Data (အထွေထွေပြင်ဆင်မှု)</div>
+                    <div class="module-body">
+                        <div class="action-btn" onclick="openPanel('productSetup')">Product Master</div>
+                        <div class="action-btn" onclick="openPanel('customerSetup')">Customer List</div>
+                        <div class="action-btn" onclick="openPanel('vendorSetup')">Vendor List</div>
+                        <div class="action-btn" onclick="openPanel('priceList')">Price List</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 2. PURCHASE MODULE -->
-            <div class="module-section">
-                <div class="module-title">🛒 Purchase (အဝယ်ပိုင်း)</div>
-                <div class="sub-menu">
-                    <div class="sub-btn" onclick="alert('Purchase Invoice မျက်နှာပြင်သို့ သွားမည်')">Purchase Invoice</div>
-                    <div class="sub-btn" onclick="alert('Purchase Order မျက်နှာပြင်သို့ သွားမည်')">Purchase Order</div>
-                    <div class="sub-btn" onclick="alert('Purchase Return မျက်နှာပြင်သို့ သွားမည်')">Purchase Return</div>
-                </div>
-            </div>
-
-            <!-- 3. SETUP & MANAGEMENT MODULE -->
-            <div class="module-section">
-                <div class="module-title">⚙️ Setup & Masters (အထွေထွေပြင်ဆင်မှု)</div>
-                <div class="sub-menu">
-                    <div class="sub-btn" onclick="alert('Product စာရင်းသို့ သွားမည်')">Product</div>
-                    <div class="sub-btn" onclick="alert('Customer စာရင်းသို့ သွားမည်')">Customer</div>
-                    <div class="sub-btn" onclick="alert('Vendor စာရင်းသို့ သွားမည်')">Vendor</div>
-                    <div class="sub-btn" onclick="alert('Price List သို့ သွားမည်')">Price List</div>
-                </div>
+            <!-- DYNAMIC ACTIVE PANEL (Initially Hidden) -->
+            <div id="activePanel" class="panel-view hidden">
+                <button class="back-btn" onclick="closePanel()">← နောက်သို့ (Back)</button>
+                <div id="panelContent"></div>
             </div>
 
         </div>
@@ -120,6 +135,49 @@
             document.getElementById('loginContainer').classList.remove('hidden');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            closePanel();
+        }
+
+        function openPanel(type) {
+            document.getElementById('mainMenu').classList.add('hidden');
+            let panel = document.getElementById('activePanel');
+            let content = document.getElementById('panelContent');
+            panel.classList.remove('hidden');
+
+            let htmlData = '';
+            switch(type) {
+                case 'saleInvoice':
+                    htmlData = `<h4>📄 Sale Invoice (အရောင်း ငွေတောင်းခံလွှာ)</h4>
+                                <div class="form-group" style="margin-top:10px;"><label>Customer အမည်</label><input type="text" placeholder="Customer Name"></div>
+                                <div class="form-group"><label>ပစ္စည်းရွေးချယ်ရန်</label><select><option>ရေသန့် (500 Ks)</option><option>ကော်ဖီမွှေး (1,200 Ks)</option></select></div>
+                                <div class="form-group"><label>အရေအတွက်</label><input type="number" value="1"></div>
+                                <button class="btn" onclick="alert('အရောင်းဘောက်ချာ အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ!')">Invoice အတည်ပြုမည်</button>`;
+                    break;
+                case 'productSetup':
+                    htmlData = `<h4>🏷️ Product Master (ပစ္စည်းအသစ်ထည့်ရန်)</h4>
+                                <div class="form-group" style="margin-top:10px;"><label>ပစ္စည်းအမည်</label><input type="text" placeholder="Product Name"></div>
+                                <div class="form-group"><label>ရောင်းဈေး (Selling Price)</label><input type="number" placeholder="0 Ks"></div>
+                                <div class="form-group"><label>လက်ကျန်ပစ္စည်း ပမာဏ (Stock)</label><input type="number" placeholder="0"></div>
+                                <button class="btn" onclick="alert('ပစ္စည်းအသစ် စာရင်းသွင်းပြီးပါပြီ!')">Save Product</button>`;
+                    break;
+                case 'customerSetup':
+                    htmlData = `<h4>👥 Customer Management (ဖောက်သည်စာရင်း)</h4>
+                                <p style="font-size:13px; color:#94a3b8; margin-top:10px;">လက်ရှိ သိမ်းဆည်းထားသော ဖောက်သည်စာရင်းများ -</p>
+                                <ul style="margin-top:10px; padding-left:15px; font-size:13px;">
+                                    <li>ဦးအောင်ကျော် (ဖုန်း - 09123456789)</li>
+                                    <li>မသန္တာ (ဖုန်း - 09987654321)</li>
+                                </ul>`;
+                    break;
+                default:
+                    htmlData = `<h4>⚙️ ${type.toUpperCase()} Management</h4><p style="font-size:13px; color:#94a3b8; margin-top:10px;">ဤ module အတွက် အချက်အလက် ထည့်သွင်းရန် ပြင်ဆင်နေဆဲ ဖြစ်ပါသည်။</p>`;
+                    break;
+            }
+            content.innerHTML = htmlData;
+        }
+
+        function closePanel() {
+            document.getElementById('activePanel').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
         }
     </script>
 
