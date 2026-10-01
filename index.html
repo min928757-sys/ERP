@@ -3,46 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS Dashboard - Business Management System</title>
+    <title>Enterprise ERP System - SaaS</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 480px; }
+        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
         
-        /* Card & UI Styles */
-        .card { background: #1e293b; padding: 25px; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
-        h2 { color: #38bdf8; margin-bottom: 20px; font-size: 22px; text-align: center; }
+        .container { width: 100%; max-width: 480px; padding: 15px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 14px; border: 1px solid #334155; }
+        h2 { color: #38bdf8; margin-bottom: 20px; text-align: center; font-size: 20px; }
         
-        /* Form Controls */
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 5px; }
         input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; font-size: 16px; }
         input:focus { outline: none; border-color: #38bdf8; }
         
-        /* Buttons */
-        .btn { width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn { width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn:hover { background: #0ea5e9; }
         
-        /* Dashboard Layout */
         .hidden { display: none; }
-        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-        .logout-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: font-size: 12px; font-weight: bold; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155; }
-        .stat-card h4 { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
-        .stat-card p { font-size: 18px; font-weight: bold; color: #38bdf8; }
-        
         .error-msg { color: #ef4444; font-size: 13px; text-align: center; margin-top: 10px; }
+
+        /* Dashboard Layout */
+        #dashSection { max-width: 600px; width: 100%; padding: 20px; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        
+        /* Module Sections */
+        .module-section { margin-bottom: 20px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; overflow: hidden; }
+        .module-title { background: #334155; padding: 12px 15px; font-size: 16px; font-weight: bold; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .sub-menu { padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #1e293b; }
+        .sub-btn { background: #0f172a; border: 1px solid #475569; padding: 10px; border-radius: 6px; color: #f8fafc; font-size: 13px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .sub-btn:hover { background: #38bdf8; color: #0f172a; border-color: #38bdf8; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <!-- Login Section -->
-        <div id="loginSection" class="card">
-            <h2>🔐 Business Login</h2>
+    <!-- Login Screen -->
+    <div class="container" id="loginContainer">
+        <div class="card">
+            <h2>🏢 Enterprise ERP Login</h2>
             <div class="form-group">
                 <label>Username</label>
                 <input type="text" id="username" placeholder="admin ဟုထည့်ပါ">
@@ -51,66 +50,74 @@
                 <label>Password</label>
                 <input type="password" id="password" placeholder="1234 ဟုထည့်ပါ">
             </div>
-            <button class="btn" onclick="handleLogin()">ဝင်ရောက်မည် (Login)</button>
+            <button class="btn" onclick="handleLogin()">Login ဝင်မည်</button>
             <p id="errorMsg" class="error-msg"></p>
         </div>
+    </div>
 
-        <!-- Dashboard Section (Initially Hidden) -->
-        <div id="dashSection" class="card hidden">
+    <!-- Dashboard Screen -->
+    <div class="container hidden" id="dashContainer">
+        <div class="card">
             <div class="dash-header">
                 <div>
-                    <h3 style="color: #38bdf8;">📊 ဧရာဝတီ ဆိုင်ခွဲ (Dashboard)</h3>
-                    <p style="font-size: 12px; color: #94a3b8;">Welcome back, Admin</p>
+                    <h3 style="color: #38bdf8; font-size: 18px;">📊 ERP System Dashboard</h3>
+                    <p style="font-size: 12px; color: #94a3b8;">Role: Super Admin / Business Owner</p>
                 </div>
                 <button class="logout-btn" onclick="handleLogout()">Logout</button>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h4>ယနေ့ အရောင်း</h4>
-                    <p>350,000 Ks</p>
-                </div>
-                <div class="stat-card">
-                    <h4>စုစုပေါင်း ပစ္စည်း</h4>
-                    <p>124 မျိုး</p>
-                </div>
-                <div class="stat-card">
-                    <h4>ဖောက်သည် အသစ်</h4>
-                    <p>12 ယောက်</p>
-                </div>
-                <div class="stat-card">
-                    <h4>အမြတ်ငွေ (ခန့်မှန်း)</h4>
-                    <p>85,000 Ks</p>
+            <!-- 1. SALES MODULE -->
+            <div class="module-section">
+                <div class="module-title">📦 Sales (အရောင်းပိုင်း)</div>
+                <div class="sub-menu">
+                    <div class="sub-btn" onclick="alert('Sale Invoice မျက်နှာပြင်သို့ သွားမည်')">Sale Invoice</div>
+                    <div class="sub-btn" onclick="alert('Sale Order မျက်နှာပြင်သို့ သွားမည်')">Sale Order</div>
+                    <div class="sub-btn" onclick="alert('Sale Return မျက်နှာပြင်သို့ သွားမည်')">Sale Return</div>
                 </div>
             </div>
 
-            <div style="background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155;">
-                <h4 style="font-size: 14px; margin-bottom: 10px; color: #cbd5e1;">နောက်ဆုံး လုပ်ဆောင်ချက်များ</h4>
-                <p style="font-size: 13px; color: #64748b; text-align: center; padding: 10px;">အရောင်းအဝယ် မှတ်တမ်းအသစ်များ မရှိသေးပါ။</p>
+            <!-- 2. PURCHASE MODULE -->
+            <div class="module-section">
+                <div class="module-title">🛒 Purchase (အဝယ်ပိုင်း)</div>
+                <div class="sub-menu">
+                    <div class="sub-btn" onclick="alert('Purchase Invoice မျက်နှာပြင်သို့ သွားမည်')">Purchase Invoice</div>
+                    <div class="sub-btn" onclick="alert('Purchase Order မျက်နှာပြင်သို့ သွားမည်')">Purchase Order</div>
+                    <div class="sub-btn" onclick="alert('Purchase Return မျက်နှာပြင်သို့ သွားမည်')">Purchase Return</div>
+                </div>
             </div>
+
+            <!-- 3. SETUP & MANAGEMENT MODULE -->
+            <div class="module-section">
+                <div class="module-title">⚙️ Setup & Masters (အထွေထွေပြင်ဆင်မှု)</div>
+                <div class="sub-menu">
+                    <div class="sub-btn" onclick="alert('Product စာရင်းသို့ သွားမည်')">Product</div>
+                    <div class="sub-btn" onclick="alert('Customer စာရင်းသို့ သွားမည်')">Customer</div>
+                    <div class="sub-btn" onclick="alert('Vendor စာရင်းသို့ သွားမည်')">Vendor</div>
+                    <div class="sub-btn" onclick="alert('Price List သို့ သွားမည်')">Price List</div>
+                </div>
+            </div>
+
         </div>
-
     </div>
 
     <script>
         function handleLogin() {
-            let user = document.getElementById('username').value.trim();
-            let pass = document.getElementById('password').value.trim();
-            let errorMsg = document.getElementById('errorMsg');
+            let u = document.getElementById('username').value.trim();
+            let p = document.getElementById('password').value.trim();
+            let err = document.getElementById('errorMsg');
 
-            // ယာယီစစ်ဆေးချက် (Testing Credentials)
-            if (user === 'admin' && pass === '1234') {
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('dashSection').classList.remove('hidden');
-                errorMsg.innerText = '';
+            if(u === 'admin' && p === '1234') {
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('dashContainer').classList.remove('hidden');
+                err.innerText = '';
             } else {
-                errorMsg.innerText = 'Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။';
+                err.innerText = 'Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။';
             }
         }
 
         function handleLogout() {
-            document.getElementById('dashSection').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashContainer').classList.add('hidden');
+            document.getElementById('loginContainer').classList.remove('hidden');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
         }
