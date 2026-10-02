@@ -1,315 +1,243 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RetailPro - ERP Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>RetailPro ERP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Myanmar:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#f4f6fa; --surface:#fff; --line:#e3e8ef; --text:#1a2233; --muted:#667085;
-  --side:#111a2e; --side-hi:#1b2742; --primary:#1d5fd6; --primary-d:#164cb0;
-  --ok:#0f9d58; --warn:#c77700; --bad:#d92d20;
-  --ok-bg:#e6f6ee; --warn-bg:#fff4dd; --bad-bg:#fdecea; --pri-bg:#e8f0fe;
-}
+:root{--bg:#f3f5f9;--sf:#fff;--ln:#e3e8ef;--tx:#1a2233;--mu:#667085;--sd:#101a30;--sh:#1b2846;--pr:#1d5fd6;--ok:#0f9d58;--bad:#d92d20;--warn:#c77700}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{font-family:Inter,"Noto Sans Myanmar","Padauk",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;overflow:hidden}
+body{font-family:Inter,"Noto Sans Myanmar",system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;height:100vh;overflow:hidden}
 button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+:focus-visible{outline:2px solid var(--pr);outline-offset:2px}
 .hidden{display:none!important}
-
-/* Login */
-#loginOverlay{position:fixed;inset:0;display:grid;grid-template-columns:1fr 1fr;z-index:100;background:var(--surface)}
-.login-brand{background:var(--side);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
-.login-brand .logo{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
-.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:grid;place-items:center;font-size:16px}
-.login-brand h1{font-size:30px;line-height:1.35;font-weight:600;max-width:420px}
-.login-brand p{color:#9aa7c0;margin-top:12px;max-width:380px}
-.login-brand small{color:#6d7a95}
-.login-form-wrap{display:grid;place-items:center;padding:24px}
-.login-card{width:100%;max-width:360px}
-.login-card h2{font-size:22px;font-weight:600}
-.login-card .sub{color:var(--muted);margin:4px 0 24px}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
-.input{width:100%;padding:10px 12px;background:#fff;border:1px solid #cfd6e2;border-radius:6px}
-.input:focus{border-color:var(--primary);outline:2px solid var(--pri-bg)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:6px;border:1px solid var(--line);background:#fff;font-weight:600;cursor:pointer}
-.btn:hover{background:#f8fafc}
-.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-.btn.primary:hover{background:var(--primary-d)}
-.btn.block{width:100%;padding:11px}
-.btn.sm{padding:5px 10px;font-size:12px}
-.error-txt{color:var(--bad);font-size:12px;margin-top:10px;min-height:18px}
-
-/* Layout */
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.view{animation:in .25s ease}
+/* login */
+#login{position:fixed;inset:0;display:grid;grid-template-columns:1.1fr 1fr;background:#fff;z-index:100}
+.lb{background:linear-gradient(160deg,#101a30,#1d3a78);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.lb h1{font-size:30px;line-height:1.3;max-width:420px}.lb p{color:#a9b7d4;margin-top:12px;max-width:380px}
+.lf{display:grid;place-items:center;padding:24px}.lc{width:100%;max-width:340px}.lc h2{font-size:22px}.lc .s{color:var(--mu);margin:4px 0 22px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.lm{width:30px;height:30px;border-radius:8px;background:var(--pr);display:grid;place-items:center}
+/* controls */
+.field{margin-bottom:14px}.field label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom:5px}
+.input{width:100%;padding:9px 11px;background:#fff;border:1px solid #cfd6e2;border-radius:6px}
+.input:focus{border-color:var(--pr)}.input[readonly]{background:#f3f5f9}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;border:1px solid var(--ln);background:#fff;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#f6f8fb}.btn.primary{background:var(--pr);border-color:var(--pr);color:#fff}.btn.primary:hover{background:#164cb0}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}.btn.sm{padding:4px 9px;font-size:12px}.btn.d{color:var(--bad)}
+.err{color:var(--bad);font-size:12px;margin-top:10px;min-height:16px}
+/* layout */
 .app{display:flex;height:100vh}
-.sidebar{width:248px;background:var(--side);color:#c5cee0;display:flex;flex-direction:column;flex-shrink:0}
-.brand{height:60px;padding:0 20px;display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:17px;border-bottom:1px solid #223050}
-.brand .logo-mark{width:28px;height:28px;font-size:14px}
-.nav{flex:1;overflow-y:auto;padding:12px}
-.nav-group{font-size:11px;color:#6d7a95;font-weight:600;padding:14px 12px 6px}
-.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border:0;background:none;color:inherit;border-radius:6px;cursor:pointer;text-align:left;font-size:13.5px;position:relative}
-.nav-item:hover{background:var(--side-hi);color:#fff}
-.nav-item.active{background:var(--side-hi);color:#fff;font-weight:600}
-.nav-item.active::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:3px;background:var(--primary);border-radius:0 3px 3px 0}
-.nav-item .ic{width:18px;text-align:center}
-.side-foot{padding:14px 16px;border-top:1px solid #223050;display:flex;align-items:center;gap:10px}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
-.side-foot b{display:block;color:#fff;font-size:13px}
-.side-foot span{font-size:12px;color:#6d7a95}
-
+.sidebar{width:252px;background:var(--sd);color:#c3cde2;display:flex;flex-direction:column;flex-shrink:0;transition:transform .25s}
+.brand{height:60px;padding:0 18px;display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:17px;border-bottom:1px solid #223152}
+.nav{flex:1;overflow-y:auto;padding:10px}
+.gh,.si{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:inherit;cursor:pointer;text-align:left;border-radius:6px}
+.gh{padding:10px 12px;font-weight:600;font-size:13.5px}.gh:hover,.si:hover{background:var(--sh);color:#fff}
+.gh i{margin-left:auto;font-style:normal;transition:transform .25s}.grp.open .gh i{transform:rotate(90deg)}
+.sub{max-height:0;overflow:hidden;transition:max-height .28s ease}.grp.open .sub{max-height:320px}
+.si{padding:8px 12px 8px 40px;font-size:13px;color:#98a6c4}
+.si.on{background:var(--pr);color:#fff;font-weight:600}.gh.si{padding:10px 12px;color:#c3cde2}.gh.si.on{color:#fff}
 .main{flex:1;display:flex;flex-direction:column;min-width:0}
-.topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px}
-.crumbs{font-size:12px;color:var(--muted)}
-.topbar h1{font-size:17px;font-weight:600;line-height:1.2}
-.spacer{flex:1}
-.search{width:240px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
-.date{font-size:12px;color:var(--muted);white-space:nowrap}
-.content{flex:1;overflow-y:auto;padding:24px}
-
-/* Components */
-.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
-.page-head h2{font-size:18px;font-weight:600}
-.page-head p{color:var(--muted);font-size:13px}
-.grid{display:grid;gap:16px}
-.kpis{grid-template-columns:repeat(4,1fr);margin-bottom:16px}
-.two{grid-template-columns:2fr 1fr}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:8px}
-.card-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
-.card-h h3{font-size:14px;font-weight:600}
-.card-b{padding:18px}
-.kpi{padding:16px 18px}
-.kpi .lbl{color:var(--muted);font-size:12px;font-weight:500}
-.kpi .val{font-size:24px;font-weight:700;margin:4px 0 2px;letter-spacing:-.01em}
-.delta{font-size:12px;font-weight:600}
-.delta.up{color:var(--ok)}.delta.down{color:var(--bad)}
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th,td{padding:11px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}
-th{background:#f8fafc;color:var(--muted);font-weight:600;font-size:12px}
-tbody tr:hover{background:#fafbfd}
-tr:last-child td{border-bottom:0}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
-.badge.ok{background:var(--ok-bg);color:var(--ok)}
-.badge.warn{background:var(--warn-bg);color:var(--warn)}
-.badge.bad{background:var(--bad-bg);color:var(--bad)}
-.badge.pri{background:var(--pri-bg);color:var(--primary)}
-.form-row{display:grid;grid-template-columns:2fr 2fr 90px auto;gap:12px;align-items:end;margin-bottom:6px}
-.totals{margin-left:auto;width:260px;padding:16px 18px}
-.totals div{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted)}
-.totals .grand{color:var(--text);font-weight:700;font-size:16px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
-.empty{padding:36px;text-align:center;color:var(--muted)}
-.bars{display:flex;align-items:flex-end;gap:14px;height:180px;padding-top:8px}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
-.bar{width:100%;max-width:38px;background:#c7d8fa;border-radius:4px 4px 0 0}
-.bar.cur{background:var(--primary)}
-.bar-col span{font-size:11px;color:var(--muted)}
-.stock-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-.stock-item:last-child{border-bottom:0}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:200}
-
-@media(max-width:900px){
-  #loginOverlay{grid-template-columns:1fr}.login-brand{display:none}
-  .sidebar{width:68px}.sidebar .t,.nav-group,.side-foot div,.brand span.t{display:none}
-  .kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}
-  .search,.date{display:none}.form-row{grid-template-columns:1fr 1fr}
-}
+.top{height:60px;background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:14px;padding:0 22px}
+.top h1{font-size:17px}.sp{flex:1}.dt{color:var(--mu);font-size:12px}.burger{display:none}
+.content{flex:1;overflow-y:auto;padding:22px}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.tools .input{width:240px}
+.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,1fr);margin-bottom:16px}.two{grid-template-columns:2fr 1fr}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:8px;margin-bottom:16px}.grid .card{margin:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid var(--ln)}.card-h h3{font-size:14px}
+.card-b{padding:18px}.kpi{padding:16px 18px}.kpi .lbl{color:var(--mu);font-size:12px}.kpi .val{font-size:22px;font-weight:700;margin-top:4px}
+.tbl-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}
+th,td{padding:10px 16px;text-align:left;border-bottom:1px solid var(--ln);font-size:13px;white-space:nowrap}
+th{background:#f8fafc;color:var(--mu);font-size:12px}tbody tr:hover{background:#fafbfd}tr:last-child td{border-bottom:0}
+.num{text-align:right!important;font-variant-numeric:tabular-nums}.act{text-align:right!important}.act .btn{margin-left:4px}
+.empty{padding:28px;text-align:center;color:var(--mu)}
+.badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}.badge.ok{background:#e6f6ee;color:var(--ok)}.badge.bad{background:#fdecea;color:var(--bad)}
+tr.low td{background:#fff8f7}
+.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}
+.bars{display:flex;align-items:flex-end;gap:12px;height:170px}.bar-col{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+.bar{width:100%;max-width:36px;min-height:2px;background:var(--pr);border-radius:4px 4px 0 0}.bar-col span{font-size:11px;color:var(--mu)}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.entry{display:grid;grid-template-columns:1.2fr 2fr .7fr .9fr auto;gap:10px;align-items:end}.entry .field{margin:0}
+.tot{display:flex;justify-content:flex-end;gap:24px;padding:14px 18px;font-size:16px;font-weight:700;border-top:1px solid var(--ln)}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;place-items:center;z-index:150}.modal.show{display:grid}
+.mbox{background:#fff;border-radius:10px;padding:24px;width:92%;max-width:440px;max-height:92vh;overflow:auto;animation:in .2s}.mbox h3{margin-bottom:16px}
+.mact{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--tx);color:#fff;padding:12px 18px;border-radius:8px;z-index:200;animation:in .2s}
+#print{display:none}
+@media print{body{overflow:visible;height:auto;background:#fff}.app,#login,.modal,.toast{display:none!important}#print{display:block;padding:20px;color:#000}#print table{border:1px solid #000;margin:12px 0}#print th,#print td{border:1px solid #000;padding:6px 10px}.sign{display:flex;justify-content:space-between;margin-top:60px}.sign span{border-top:1px solid #000;padding-top:4px;width:180px;text-align:center}}
+@media(max-width:860px){#login{grid-template-columns:1fr}.lb{display:none}.sidebar{position:fixed;z-index:90;height:100%;transform:translateX(-100%)}.sidebar.open{transform:none}.burger{display:inline-flex}.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}.entry{grid-template-columns:1fr 1fr}.dt{display:none}}
 </style>
 </head>
 <body>
 
-<!-- Login -->
-<div id="loginOverlay">
-  <div class="login-brand">
-    <div class="logo"><div class="logo-mark">📦</div>RetailPro</div>
-    <div>
-      <h1>အရောင်း၊ ပစ္စည်းနှင့် ဖောက်သည်စာရင်းများကို တစ်နေရာတည်းမှ စီမံပါ။</h1>
-      <p>Invoice, Order, Purchase နှင့် Report များကို လုပ်ငန်းစဉ်တစ်ခုတည်းတွင် ကြည့်ရှုနိုင်သည်။</p>
-    </div>
-    <small>© 2026 RetailPro ERP</small>
-  </div>
-  <div class="login-form-wrap">
-    <div class="login-card">
-      <h2>အကောင့်ဝင်ရန်</h2>
-      <p class="sub">သင့် Username နှင့် Password ကို ထည့်ပါ။</p>
-      <div class="field"><label for="userInput">Username</label><input class="input" id="userInput" placeholder="admin" autocomplete="username"></div>
-      <div class="field"><label for="passInput">Password</label><input class="input" type="password" id="passInput" placeholder="1234" autocomplete="current-password"></div>
-      <button class="btn primary block" onclick="doLogin()">ဝင်ရောက်မည်</button>
-      <p id="loginError" class="error-txt" role="alert"></p>
-    </div>
-  </div>
+<div id="login">
+  <div class="lb"><div class="logo"><div class="lm">📦</div>RetailPro ERP</div>
+    <div><h1>Sales, purchases and stock across every location, in one place.</h1><p>Create products, purchase, sell, print invoices and transfer stock between shops.</p></div>
+    <small style="color:#7d8cb0">© 2026 RetailPro</small></div>
+  <div class="lf"><div class="lc"><h2>Sign in</h2><p class="s">Enter your username and password.</p>
+    <div class="field"><label for="u">Username</label><input class="input" id="u" placeholder="admin"></div>
+    <div class="field"><label for="p">Password</label><input class="input" id="p" type="password" placeholder="1234"></div>
+    <button class="btn primary" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">Sign in</button>
+    <p class="err" id="err"></p></div></div>
 </div>
 
-<!-- App -->
-<div class="app hidden" id="appContainer">
-  <aside class="sidebar">
-    <div class="brand"><div class="logo-mark">📦</div><span class="t">RetailPro</span></div>
-    <nav class="nav" id="nav"></nav>
-    <div class="side-foot"><div class="avatar">AD</div><div><b>Admin</b><span>Store Manager</span></div></div>
-  </aside>
+<div class="app hidden" id="app">
+  <aside class="sidebar" id="sidebar"><div class="brand"><div class="lm">📦</div>RetailPro</div><nav class="nav" id="nav"></nav></aside>
   <div class="main">
-    <header class="topbar">
-      <div><div class="crumbs" id="crumb">RetailPro</div><h1 id="topbarTitle">Dashboard</h1></div>
-      <div class="spacer"></div>
-      <input class="search" placeholder="ရှာဖွေရန်..." aria-label="Search">
-      <span class="date" id="today"></span>
-      <button class="btn sm" onclick="doLogout()">Logout</button>
-    </header>
-    <main class="content" id="contentBody"></main>
+    <header class="top"><button class="btn sm burger" onclick="$('#sidebar').classList.toggle('open')">☰</button><h1 id="title"></h1><div class="sp"></div><span class="dt" id="date"></span><button class="btn sm" onclick="logout()">Logout</button></header>
+    <main class="content" id="content"></main>
   </div>
 </div>
+<div class="modal" id="modal"></div>
+<div id="print"></div>
 
 <script>
-/* ---------- Data (in-memory) ---------- */
-const products = [
-  {code:'P-001', name:'ရေသန့် (1L)', price:500, stock:45, min:20},
-  {code:'P-002', name:'ကော်ဖီမွှေး', price:1200, stock:12, min:15},
-  {code:'P-003', name:'ဆပ်ပြာ', price:800, stock:60, min:20},
-  {code:'P-004', name:'ဆန် (1 ပိဿာ)', price:3800, stock:8, min:10},
-];
-const customers = [
-  {id:'C-001', name:'ဦးမောင်မောင်', phone:'09 450 112 233', total:182000},
-  {id:'C-002', name:'daw Mya Mya', phone:'09 790 556 120', total:96500},
-  {id:'C-003', name:'Golden Mart', phone:'09 255 884 410', total:540000},
-];
-const invoices = [
-  {no:'INV-1004', customer:'Golden Mart', amount:240000, status:'Paid'},
-  {no:'INV-1003', customer:'ဦးမောင်မောင်', amount:58000, status:'Pending'},
-  {no:'INV-1002', customer:'daw Mya Mya', amount:36500, status:'Paid'},
-  {no:'INV-1001', customer:'Walk-in', amount:12000, status:'Overdue'},
-];
-let lines = [];
+const $=s=>document.querySelector(s),fmt=n=>(+n||0).toLocaleString('en-US'),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+let DB;try{DB=JSON.parse(localStorage.getItem('retailpro'))}catch(e){}
+DB=DB||{shop:'My Retail Shop',seq:{},
+ products:[{id:1,code:'P-001',desc:'Drinking Water 1L',pp:350,sp:500,unit:'btl',min:20},{id:2,code:'P-002',desc:'Coffee Mix',pp:900,sp:1200,unit:'pack',min:15}],
+ customers:[{id:1,code:'C-001',name:'Walk-in Customer',phone:'',addr:''}],suppliers:[{id:1,code:'S-001',name:'Main Supplier',phone:'',addr:''}],
+ locations:[{id:1,code:'MAIN',name:'Main Store'},{id:2,code:'SHOP1',name:'Shop 1'},{id:3,code:'WH',name:'Warehouse'}],
+ expenses:[],sale:[],sret:[],purchase:[],pret:[],transfer:[]};
+const save=()=>{try{localStorage.setItem('retailpro',JSON.stringify(DB))}catch(e){}};
+const uid=a=>a.reduce((m,x)=>Math.max(m,x.id),0)+1;
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2400)};
+const ln=id=>DB.locations.find(l=>l.id==id)?.name||'-',P=c=>DB.products.find(p=>p.code===c)||{};
+const dt=d=>d.lines.reduce((a,l)=>a+l.qty*(l.price||0),0),sum=a=>a.reduce((x,d)=>x+dt(d),0);
 
-const fmt = n => n.toLocaleString('en-US') + ' Ks';
-const badge = s => `<span class="badge ${{Paid:'ok',Pending:'warn',Overdue:'bad'}[s]||'pri'}">${s}</span>`;
-const menu = [
-  ['Overview', [['dashboard','📊','Dashboard']]],
-  ['Sales', [['saleInvoice','📄','Sale Invoice'],['saleOrder','🛒','Sale Order'],['reports','📈','Sales Report']]],
-  ['Inventory', [['purchase','📥','Purchase Invoice'],['products','🏷️','Product Master']]],
-  ['Contacts', [['customers','👥','Customers']]],
-];
-const titles = {dashboard:'Dashboard',saleInvoice:'Sale Invoice',saleOrder:'Sale Order',purchase:'Purchase Invoice',products:'Product Master',customers:'Customers',reports:'Sales Report'};
+/* master data config */
+const PE=[['code','Code'],['name','Name'],['phone','Phone'],['addr','Address']];
+const M={products:{t:'Product Master',f:[['code','Product Code'],['desc','Description'],['pp','Purchase Price','number'],['sp','Sale Price','number'],['unit','Unit'],['min','Min Stock','number']]},
+ customers:{t:'Customers',f:PE},suppliers:{t:'Suppliers',f:PE},locations:{t:'Locations',f:[['code','Code'],['name','Location Name']]},
+ expenses:{t:'Expenses',f:[['date','Date','date'],['desc','Description'],['amount','Amount','number']]}};
+/* document config: s = stock direction */
+const D={sale:{t:'Sale Invoice',pre:'SI',p:'customers',pl:'Customer',pr:'sp',s:-1},sret:{t:'Sale Return',pre:'SR',p:'customers',pl:'Customer',pr:'sp',s:1},
+ purchase:{t:'Purchase Invoice',pre:'PI',p:'suppliers',pl:'Supplier',pr:'pp',s:1},pret:{t:'Purchase Return',pre:'PR',p:'suppliers',pl:'Supplier',pr:'pp',s:-1},
+ transfer:{t:'Stock Transfer',pre:'ST'}};
+const NAV=[['Dashboard','📊',[['dash','Dashboard']]],
+ ['Sales','🧾',[['sale','New Sale Invoice'],['sale-r','Sale Records'],['sret','Sale Return'],['sret-r','Return Records'],['customers','Customers']]],
+ ['Purchase','📥',[['purchase','New Purchase Invoice'],['purchase-r','Purchase Records'],['pret','Purchase Return'],['pret-r','Return Records'],['suppliers','Suppliers']]],
+ ['Inventory','🏷️',[['products','Product Master'],['stock','Stock Balance'],['transfer','New Stock Transfer'],['transfer-r','Transfer Records'],['locations','Locations']]],
+ ['Accounts','💰',[['expenses','Expenses']]],['Reports','📈',[['report','Profit & Sales Summary']]],['Settings','⚙️',[['settings','Settings']]]];
 
-/* ---------- Auth ---------- */
-function doLogin(){
-  const u = userInput.value.trim(), p = passInput.value.trim();
-  if(u==='admin' && p==='1234'){
-    loginOverlay.classList.add('hidden'); appContainer.classList.remove('hidden');
-    loginError.textContent='';
-    buildNav(); switchTab('dashboard');
-  } else loginError.textContent='Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။';
-}
-[userInput,passInput].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()}));
-function doLogout(){
-  appContainer.classList.add('hidden'); loginOverlay.classList.remove('hidden');
-  userInput.value=''; passInput.value='';
-}
-today.textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+/* stock = computed from all documents */
+function stock(){const s={},a=(c,l,q)=>{(s[c]=s[c]||{})[l]=(s[c][l]||0)+q};
+ for(const t in D)DB[t].forEach(d=>d.lines.forEach(l=>{if(t==='transfer'){a(l.code,d.loc,-l.qty);a(l.code,d.to,l.qty)}else a(l.code,d.loc,D[t].s*l.qty)}));return s}
+const tq=c=>Object.values(stock()[c]||{}).reduce((a,b)=>a+b,0);
+function neg(){const s=stock();for(const c in s)for(const l in s[c])if(s[c][l]<0)return c+' at '+ln(l)}
 
-/* ---------- Navigation ---------- */
-function buildNav(){
-  nav.innerHTML = menu.map(([g,items])=>`<div class="nav-group">${g}</div>`+
-    items.map(([id,ic,t])=>`<button class="nav-item" data-id="${id}" onclick="switchTab('${id}')"><span class="ic">${ic}</span><span class="t">${t}</span></button>`).join('')).join('');
-}
-function toast(msg){
-  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(),2200);
-}
+/* auth + nav */
+function doLogin(){if($('#u').value.trim()==='admin'&&$('#p').value.trim()==='1234'){$('#login').classList.add('hidden');$('#app').classList.remove('hidden');buildNav();go('dash')}else $('#err').textContent='Wrong username or password.'}
+['#u','#p'].forEach(s=>$(s).addEventListener('keydown',e=>e.key==='Enter'&&doLogin()));
+function logout(){$('#app').classList.add('hidden');$('#login').classList.remove('hidden');$('#u').value=$('#p').value=''}
+$('#date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+function buildNav(){$('#nav').innerHTML=NAV.map(([g,ic,it])=>it.length<2?`<button class="gh si" data-id="${it[0][0]}" onclick="go('${it[0][0]}')">${ic} ${g}</button>`:
+ `<div class="grp"><button class="gh" onclick="this.parentNode.classList.toggle('open')">${ic} ${g}<i>›</i></button><div class="sub">${it.map(([id,t])=>`<button class="si" data-id="${id}" onclick="go('${id}')">${t}</button>`).join('')}</div></div>`).join('')}
+function go(id,arg){
+ document.querySelectorAll('.si').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.closest('.grp')?.classList.add('open')});
+ $('#sidebar').classList.remove('open');const base=id.replace(/-r$/,'');
+ const [t,h,fn]=M[id]?master(id):D[base]&&id!==base?rec(base):D[id]?doc(id,arg):V[id]();
+ $('#title').textContent=t;const c=$('#content');c.innerHTML=`<div class="view">${h}</div>`;c.scrollTop=0;fn&&fn()}
 
-/* ---------- Views ---------- */
-const views = {
-dashboard(){
-  const days=[['Mon',42],['Tue',58],['Wed',35],['Thu',66],['Fri',80],['Sat',72],['Sun',45]];
-  const kpi=(l,v,d,up)=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="delta ${up?'up':'down'}">${up?'▲':'▼'} ${d} <span style="color:var(--muted);font-weight:400">ယမန်နေ့နှင့်စာလျှင်</span></div></div>`;
-  const low = products.filter(p=>p.stock<=p.min);
-  return `<div class="page-head"><div><h2>ကြိုဆိုပါတယ်၊ Boss</h2><p>ယနေ့အရောင်းအဝယ် အခြေအနေများ</p></div>
-    <button class="btn primary" onclick="switchTab('saleInvoice')">+ Invoice အသစ်</button></div>
-  <div class="grid kpis">
-    ${kpi('ယနေ့အရောင်း','450,000 Ks','12.4%',1)}${kpi('စုစုပေါင်းပစ္စည်း','128 မျိုး','3 မျိုး',1)}
-    ${kpi('ဖောက်သည်အသစ်','14 ယောက်','2 ယောက်',0)}${kpi('ရရန်ကျန်ငွေ','94,000 Ks','5.1%',0)}
-  </div>
-  <div class="grid two">
-    <div class="card"><div class="card-h"><h3>အပတ်စဉ် အရောင်း (သိန်း Ks)</h3></div>
-      <div class="card-b"><div class="bars">${days.map(([d,v],i)=>`<div class="bar-col"><div class="bar ${i===4?'cur':''}" style="height:${v}%" title="${v}"></div><span>${d}</span></div>`).join('')}</div></div></div>
-    <div class="card"><div class="card-h"><h3>လက်ကျန်နည်းသော ပစ္စည်း</h3><span class="badge bad">${low.length}</span></div>
-      <div class="card-b">${low.map(p=>`<div class="stock-item"><div>${p.name}<br><small style="color:var(--muted)">${p.code}</small></div><span class="badge bad">${p.stock} ကျန်</span></div>`).join('')||'<div class="empty">လက်ကျန်နည်းသော ပစ္စည်းမရှိပါ</div>'}</div></div>
-  </div>
-  <div class="card" style="margin-top:16px"><div class="card-h"><h3>လတ်တလော Invoice များ</h3><button class="btn sm" onclick="switchTab('reports')">အားလုံးကြည့်ရန်</button></div>
-    ${invTable(invoices.slice(0,4))}</div>`;
-},
-saleInvoice(){
-  const total = lines.reduce((s,l)=>s+l.price*l.qty,0), tax=Math.round(total*0.05);
-  return `<div class="page-head"><div><h2>အရောင်း ငွေတောင်းခံလွှာအသစ်</h2><p>ဖောက်သည်နှင့် ပစ္စည်းများကို ရွေးချယ်ပြီး Invoice ပြုလုပ်ပါ။</p></div></div>
-  <div class="card" style="margin-bottom:16px"><div class="card-b">
-    <div class="field" style="max-width:360px"><label for="invCust">Customer</label>
-      <select class="input" id="invCust">${customers.map(c=>`<option>${c.name}</option>`).join('')}<option>Walk-in</option></select></div>
-    <div class="form-row">
-      <div><label style="font-size:12px;font-weight:600;color:var(--muted)" for="invProd">ပစ္စည်း</label>
-        <select class="input" id="invProd" style="margin-top:6px">${products.map((p,i)=>`<option value="${i}">${p.name} (${fmt(p.price)})</option>`).join('')}</select></div>
-      <div></div>
-      <div><label style="font-size:12px;font-weight:600;color:var(--muted)" for="invQty">အရေအတွက်</label>
-        <input class="input" id="invQty" type="number" min="1" value="1" style="margin-top:6px"></div>
-      <button class="btn" onclick="addLine()">+ ထည့်မည်</button>
-    </div></div></div>
-  <div class="card"><div class="tbl-wrap"><table>
-    <thead><tr><th>ပစ္စည်း</th><th class="num">ဈေးနှုန်း</th><th class="num">အရေအတွက်</th><th class="num">ကျသင့်ငွေ</th><th></th></tr></thead>
-    <tbody>${lines.map((l,i)=>`<tr><td>${l.name}</td><td class="num">${fmt(l.price)}</td><td class="num">${l.qty}</td><td class="num">${fmt(l.price*l.qty)}</td><td class="num"><button class="btn sm" onclick="delLine(${i})">ဖယ်ရှားရန်</button></td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">ပစ္စည်းမရှိသေးပါ။ အပေါ်တွင် ပစ္စည်းရွေးပြီး ထည့်ပါ။</div></td></tr>'}</tbody></table></div>
-    <div class="totals"><div><span>စုစုပေါင်း</span><span>${fmt(total)}</span></div><div><span>အခွန် (5%)</span><span>${fmt(tax)}</span></div>
-    <div class="grand"><span>ပေးရန်စုစုပေါင်း</span><span>${fmt(total+tax)}</span></div></div></div>
-  <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
-    <button class="btn" onclick="lines=[];switchTab('saleInvoice')">ရှင်းလင်းရန်</button>
-    <button class="btn primary" onclick="saveInvoice()">Invoice အတည်ပြုမည်</button></div>`;
-},
-products(){
-  return `<div class="page-head"><div><h2>ပစ္စည်းစာရင်းများ</h2><p>ပစ္စည်း ${products.length} မျိုး</p></div></div>
-  <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Barcode</th><th>ပစ္စည်းအမည်</th><th class="num">ရောင်းဈေး</th><th class="num">လက်ကျန်</th><th>အခြေအနေ</th></tr></thead>
-  <tbody>${products.map(p=>`<tr><td>${p.code}</td><td>${p.name}</td><td class="num">${fmt(p.price)}</td><td class="num">${p.stock}</td><td>${p.stock<=p.min?'<span class="badge bad">လက်ကျန်နည်း</span>':'<span class="badge ok">လုံလောက်</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;
-},
-customers(){
-  return `<div class="page-head"><div><h2>ဖောက်သည်များ</h2><p>ဖောက်သည် ${customers.length} ဦး</p></div></div>
-  <div class="card"><div class="tbl-wrap"><table><thead><tr><th>ID</th><th>အမည်</th><th>ဖုန်း</th><th class="num">စုစုပေါင်းဝယ်ယူမှု</th></tr></thead>
-  <tbody>${customers.map(c=>`<tr><td>${c.id}</td><td>${c.name}</td><td>${c.phone}</td><td class="num">${fmt(c.total)}</td></tr>`).join('')}</tbody></table></div></div>`;
-},
-reports(){
-  const sum=invoices.reduce((s,i)=>s+i.amount,0);
-  return `<div class="page-head"><div><h2>အရောင်း အစီရင်ခံစာ</h2><p>စုစုပေါင်း ${fmt(sum)}</p></div></div>
-  <div class="card">${invTable(invoices)}</div>`;
-}
-};
-function invTable(rows){
-  return `<div class="tbl-wrap"><table><thead><tr><th>Invoice No.</th><th>Customer</th><th class="num">ငွေပမာဏ</th><th>အခြေအနေ</th></tr></thead>
-  <tbody>${rows.map(r=>`<tr><td><b>${r.no}</b></td><td>${r.customer}</td><td class="num">${fmt(r.amount)}</td><td>${badge(r.status)}</td></tr>`).join('')}</tbody></table></div>`;
-}
-function placeholder(id){
-  return `<div class="page-head"><div><h2>${titles[id]}</h2></div></div>
-  <div class="card"><div class="empty">ဤကဏ္ဍကို ဆက်လက် တည်ဆောက်နေဆဲ ဖြစ်ပါသည်။</div></div>`;
-}
+/* generic master data (add / edit / delete) */
+function master(id){const c=M[id],body=()=>{const q=($('#q')?.value||'').toLowerCase();
+ return DB[id].filter(r=>JSON.stringify(r).toLowerCase().includes(q)).map(r=>`<tr>${c.f.map(([k,,ty])=>`<td class="${ty==='number'?'num':''}">${ty==='number'?fmt(r[k]):esc(r[k])}</td>`).join('')}${id==='products'?`<td class="num">${fmt(tq(r.code))}</td>`:''}<td class="act"><button class="btn sm" onclick="mform('${id}',${r.id})">Edit</button><button class="btn sm d" onclick="mdel('${id}',${r.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">No records yet. Click "Add New".</td></tr>'};
+ return[c.t,`<div class="page-head"><div class="tools"><input class="input" id="q" placeholder="Search..." oninput="$('#tb').innerHTML=window.mb()"><button class="btn primary" onclick="mform('${id}')">+ Add New</button></div></div>
+ <div class="card"><div class="tbl-wrap"><table><thead><tr>${c.f.map(([,l,ty])=>`<th class="${ty==='number'?'num':''}">${l}</th>`).join('')}${id==='products'?'<th class="num">In Stock</th>':''}<th></th></tr></thead><tbody id="tb">${body()}</tbody></table></div></div>`,()=>window.mb=body]}
+function mform(id,rid){const c=M[id],r=rid?DB[id].find(x=>x.id===rid):{};
+ $('#modal').innerHTML=`<div class="mbox"><h3>${rid?'Edit':'Add'} – ${c.t}</h3>${c.f.map(([k,l,ty])=>`<div class="field"><label>${l}</label><input class="input" id="f_${k}" type="${ty||'text'}" ${rid&&id==='products'&&k==='code'?'readonly':''} value="${esc(r[k]??(ty==='date'?today():''))}"></div>`).join('')}<div class="mact"><button class="btn" onclick="mclose()">Cancel</button><button class="btn primary" onclick="msave('${id}',${rid||0})">Save</button></div></div>`;
+ $('#modal').classList.add('show');$('#f_'+c.f[0][0]).focus()}
+const mclose=()=>$('#modal').classList.remove('show');
+function msave(id,rid){const c=M[id],o={};c.f.forEach(([k,,ty])=>o[k]=ty==='number'?+$('#f_'+k).value||0:$('#f_'+k).value.trim());
+ if(!o[c.f[0][0]]||!o[c.f[1][0]])return toast('Please fill '+c.f[0][1]+' and '+c.f[1][1]);
+ if(id!=='expenses'&&DB[id].some(x=>x.code===o.code&&x.id!==rid))return toast('This code already exists');
+ if(rid)Object.assign(DB[id].find(x=>x.id===rid),o);else{o.id=uid(DB[id]);DB[id].push(o)}
+ save();mclose();toast('Saved');go(id)}
+function mdel(id,rid){const r=DB[id].find(x=>x.id===rid);
+ const used=id==='products'?Object.keys(D).some(t=>DB[t].some(d=>d.lines.some(l=>l.code===r.code))):id==='locations'?Object.keys(D).some(t=>DB[t].some(d=>d.loc==rid||d.to==rid)):false;
+ if(used)return toast('Cannot delete: already used in transactions');
+ if(!confirm('Delete this record?'))return;DB[id]=DB[id].filter(x=>x.id!==rid);save();go(id)}
 
-/* ---------- Actions ---------- */
-function switchTab(id){
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.id===id));
-  topbarTitle.textContent = titles[id];
-  contentBody.innerHTML = (views[id]||(()=>placeholder(id)))();
-  contentBody.scrollTop = 0;
-}
-function addLine(){
-  const p = products[+invProd.value], q = Math.max(1, +invQty.value||1);
-  const keep = invCust.value;
-  const ex = lines.find(l=>l.name===p.name);
-  ex ? ex.qty += q : lines.push({name:p.name, price:p.price, qty:q});
-  switchTab('saleInvoice'); invCust.value = keep;
-}
-function delLine(i){ const k=invCust.value; lines.splice(i,1); switchTab('saleInvoice'); invCust.value=k; }
-function saveInvoice(){
-  if(!lines.length){ toast('ပစ္စည်းအနည်းဆုံး တစ်ခု ထည့်ပါ။'); return; }
-  const total = lines.reduce((s,l)=>s+l.price*l.qty,0);
-  invoices.unshift({no:'INV-'+(1005+invoices.length-4), customer:invCust.value, amount:Math.round(total*1.05), status:'Pending'});
-  lines=[]; toast('Invoice သိမ်းဆည်းပြီးပါပြီ'); switchTab('reports');
-}
+/* invoice / return / transfer editor */
+let cur;
+function doc(type,eid){const c=D[type],isT=type==='transfer',e=eid&&DB[type].find(d=>d.id===eid);
+ cur=e?JSON.parse(JSON.stringify(e)):{type,date:today(),partner:isT?'':DB[c.p][0]?.name||'',loc:DB.locations[0]?.id,to:DB.locations[1]?.id,note:'',lines:[]};
+ const lo=v=>DB.locations.map(l=>`<option value="${l.id}" ${l.id==v?'selected':''}>${esc(l.name)}</option>`).join('');
+ const no=cur.no||c.pre+String((DB.seq[type]||0)+1).padStart(4,'0');
+ return[(e?'Edit ':'New ')+c.t,`<div class="page-head"><div></div><div class="tools"><button class="btn" onclick="go('${type}')">New</button><button class="btn" onclick="curPrint()">🖨 Print</button><button class="btn ok" onclick="saveDoc()">💾 Save</button></div></div>
+ <div class="card"><div class="card-b hgrid">
+  <div class="field"><label>Document No.</label><input class="input" value="${no}" readonly></div>
+  <div class="field"><label>Date</label><input class="input" type="date" value="${cur.date}" onchange="cur.date=this.value"></div>
+  ${isT?`<div class="field"><label>From Location</label><select class="input" onchange="cur.loc=+this.value;pick()">${lo(cur.loc)}</select></div><div class="field"><label>To Location</label><select class="input" onchange="cur.to=+this.value">${lo(cur.to)}</select></div>`:
+  `<div class="field"><label>${c.pl}</label><select class="input" onchange="cur.partner=this.value">${DB[c.p].map(p=>`<option ${p.name===cur.partner?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div><div class="field"><label>Location</label><select class="input" onchange="cur.loc=+this.value;pick()">${lo(cur.loc)}</select></div>`}
+  <div class="field"><label>Note</label><input class="input" value="${esc(cur.note)}" oninput="cur.note=this.value"></div></div></div>
+ <div class="card"><div class="card-b entry"><datalist id="pl">${DB.products.map(p=>`<option value="${esc(p.code)}">${esc(p.desc)}</option>`).join('')}</datalist>
+  <div class="field"><label>Product Code</label><input class="input" id="e_code" list="pl" oninput="pick()" placeholder="Type or select"></div>
+  <div class="field"><label>Description <small id="e_av" style="color:var(--ok)"></small></label><input class="input" id="e_desc" readonly></div>
+  <div class="field"><label>Qty</label><input class="input" id="e_qty" type="number" min="1" value="1" onkeydown="event.key==='Enter'&&addLine()"></div>
+  ${isT?'<div></div>':'<div class="field"><label>Price</label><input class="input" id="e_price" type="number" onkeydown="event.key===\'Enter\'&&addLine()"></div>'}
+  <button class="btn primary" onclick="addLine()">+ Add</button></div></div>
+ <div class="card"><div class="tbl-wrap" id="lines"></div><div class="tot" ${isT?'hidden':''}><span>Total</span><span id="tot">0</span> Ks</div></div>`,drawLines]}
+function pick(){const p=P($('#e_code').value.trim());$('#e_desc').value=p.desc||'';
+ const pr=$('#e_price');if(pr&&p.code)pr.value=p[D[cur.type].pr];
+ $('#e_av').textContent=p.code?'(stock here: '+((stock()[p.code]||{})[cur.loc]||0)+')':''}
+function addLine(){const code=$('#e_code').value.trim(),p=P(code),q=+$('#e_qty').value;
+ if(!p.code)return toast('Select a valid product code');if(!(q>0))return toast('Enter a quantity');
+ const price=cur.type==='transfer'?0:+$('#e_price').value||0,ex=cur.lines.find(l=>l.code===code);
+ ex?(ex.qty+=q,ex.price=price):cur.lines.push({code,desc:p.desc,qty:q,price});
+ $('#e_code').value='';$('#e_qty').value=1;pick();drawLines();$('#e_code').focus()}
+function editLine(i){const l=cur.lines.splice(i,1)[0];$('#e_code').value=l.code;pick();$('#e_qty').value=l.qty;if($('#e_price'))$('#e_price').value=l.price;drawLines()}
+function drawLines(){const isT=cur.type==='transfer';
+ $('#lines').innerHTML=`<table><thead><tr><th>#</th><th>Code</th><th>Description</th><th class="num">Qty</th>${isT?'':'<th class="num">Price</th><th class="num">Amount</th>'}<th></th></tr></thead><tbody>${cur.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td>${esc(l.desc)}</td><td class="num">${fmt(l.qty)}</td>${isT?'':`<td class="num">${fmt(l.price)}</td><td class="num">${fmt(l.qty*l.price)}</td>`}<td class="act"><button class="btn sm" onclick="editLine(${i})">Edit</button><button class="btn sm d" onclick="cur.lines.splice(${i},1);drawLines()">Delete</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No items yet. Choose a product code above and click Add.</td></tr>'}</tbody></table>`;
+ if($('#tot'))$('#tot').textContent=fmt(dt(cur))}
+function saveDoc(){const type=cur.type,c=D[type];
+ if(!cur.lines.length)return toast('Add at least one item');
+ if(type==='transfer'&&cur.loc==cur.to)return toast('From and To locations must be different');
+ const arr=DB[type],i=cur.id?arr.findIndex(d=>d.id===cur.id):-1,old=arr[i],d={...cur};
+ if(i<0){d.id=uid(arr);d.no=c.pre+String((DB.seq[type]||0)+1).padStart(4,'0');arr.push(d)}else arr[i]=d;
+ const bad=neg();if(bad){i<0?arr.pop():arr[i]=old;return toast('Not enough stock: '+bad)}
+ if(i<0)DB.seq[type]=(DB.seq[type]||0)+1;save();toast(c.t+' '+d.no+' saved');
+ if(confirm('Saved. Print now?'))printDoc(d);go(type+'-r')}
+function curPrint(){cur.lines.length?printDoc(cur):toast('Add at least one item')}
+function printDoc(d){const c=D[d.type],isT=d.type==='transfer';
+ $('#print').innerHTML=`<h2>${esc(DB.shop)}</h2><h3>${c.t}</h3><p>No: ${d.no||'(unsaved)'} &nbsp;&nbsp; Date: ${d.date}</p><p>${isT?`From: ${esc(ln(d.loc))} &nbsp; To: ${esc(ln(d.to))}`:`${c.pl}: ${esc(d.partner)} &nbsp; Location: ${esc(ln(d.loc))}`}</p>
+ <table><thead><tr><th>#</th><th>Code</th><th>Description</th><th>Qty</th>${isT?'':'<th>Price</th><th>Amount</th>'}</tr></thead><tbody>${d.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td>${esc(l.desc)}</td><td>${fmt(l.qty)}</td>${isT?'':`<td>${fmt(l.price)}</td><td>${fmt(l.qty*l.price)}</td>`}</tr>`).join('')}</tbody></table>
+ ${isT?'':`<h3 style="text-align:right">Total: ${fmt(dt(d))} Ks</h3>`}<p>${esc(d.note)}</p><div class="sign"><span>Prepared by</span><span>Received by</span></div>`;window.print()}
+
+/* records list */
+function rec(type){const c=D[type],isT=type==='transfer',body=()=>{const q=($('#q')?.value||'').toLowerCase();
+ return DB[type].filter(d=>(d.no+d.partner+d.date).toLowerCase().includes(q)).slice().reverse().map(d=>`<tr><td><b>${d.no}</b></td><td>${d.date}</td><td>${isT?esc(ln(d.loc))+' → '+esc(ln(d.to)):esc(d.partner)}</td>${isT?'':`<td>${esc(ln(d.loc))}</td>`}<td class="num">${d.lines.length}</td>${isT?'':`<td class="num">${fmt(dt(d))}</td>`}<td class="act"><button class="btn sm" onclick="printDoc(DB['${type}'].find(x=>x.id===${d.id}))">Print</button><button class="btn sm" onclick="go('${type}',${d.id})">Edit</button><button class="btn sm d" onclick="ddel('${type}',${d.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No records yet.</td></tr>'};
+ return[c.t+' Records',`<div class="page-head"><div class="tools"><input class="input" id="q" placeholder="Search no, name or date..." oninput="$('#tb').innerHTML=window.mb()"><button class="btn primary" onclick="go('${type}')">+ New</button></div>${isT?'':`<b>${DB[type].length} records · ${fmt(sum(DB[type]))} Ks</b>`}</div>
+ <div class="card"><div class="tbl-wrap"><table><thead><tr><th>No.</th><th>Date</th><th>${isT?'From → To':c.pl}</th>${isT?'':'<th>Location</th>'}<th class="num">Items</th>${isT?'':'<th class="num">Total</th>'}<th></th></tr></thead><tbody id="tb">${body()}</tbody></table></div></div>`,()=>window.mb=body]}
+function ddel(type,id){if(!confirm('Delete this document? Stock will be updated.'))return;
+ const a=DB[type],i=a.findIndex(d=>d.id===id),old=a.splice(i,1)[0],bad=neg();
+ if(bad){a.splice(i,0,old);return toast('Cannot delete, stock would go negative: '+bad)}save();go(type+'-r')}
+
+/* other views */
+const V={
+dash(){const s=stock(),td=today();let val=0,low=[];DB.products.forEach(p=>{const q=tq(p.code);val+=q*p.pp;if(q<=p.min)low.push([p,q])});
+ const days=[...Array(7)].map((_,i)=>{const d=new Date(Date.now()-(6-i)*864e5).toISOString().slice(0,10);return[d.slice(5),sum(DB.sale.filter(x=>x.date===d))]}),mx=Math.max(1,...days.map(x=>x[1]));
+ const k=(l,v)=>`<div class="card kpi"><div class="lbl">${l}</div><div class="val">${v} Ks</div></div>`;
+ return['Dashboard',`<div class="grid kpis">${k("Today's Sales",fmt(sum(DB.sale.filter(x=>x.date===td))))}${k('Total Sales',fmt(sum(DB.sale)))}${k('Total Purchases',fmt(sum(DB.purchase)))}${k('Stock Value',fmt(val))}</div>
+ <div class="grid two"><div class="card"><div class="card-h"><h3>Sales – last 7 days</h3></div><div class="card-b"><div class="bars">${days.map(([d,v])=>`<div class="bar-col"><div class="bar" style="height:${v/mx*100}%" title="${fmt(v)}"></div><span>${d}</span></div>`).join('')}</div></div></div>
+ <div class="card"><div class="card-h"><h3>Low stock</h3><span class="badge ${low.length?'bad':'ok'}">${low.length}</span></div><div class="card-b">${low.map(([p,q])=>`<div class="row"><span>${esc(p.desc)}</span><b>${q} left</b></div>`).join('')||'<div class="empty">All items are well stocked</div>'}</div></div></div>
+ <div class="card" style="margin-top:16px"><div class="card-h"><h3>Stock by location</h3></div><div class="tbl-wrap"><table><thead><tr><th>Location</th><th class="num">Quantity</th><th class="num">Value</th></tr></thead><tbody>${DB.locations.map(l=>{let q=0,v=0;DB.products.forEach(p=>{const n=(s[p.code]||{})[l.id]||0;q+=n;v+=n*p.pp});return`<tr><td>${esc(l.name)}</td><td class="num">${fmt(q)}</td><td class="num">${fmt(v)} Ks</td></tr>`}).join('')}</tbody></table></div></div>`]},
+stock(){const s=stock(),L=DB.locations;
+ return['Stock Balance',`<div class="card"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Description</th>${L.map(l=>`<th class="num">${esc(l.name)}</th>`).join('')}<th class="num">Total</th><th class="num">Value</th></tr></thead><tbody>${DB.products.map(p=>{const t=tq(p.code);return`<tr class="${t<=p.min?'low':''}"><td>${esc(p.code)}</td><td>${esc(p.desc)}</td>${L.map(l=>`<td class="num">${fmt((s[p.code]||{})[l.id])}</td>`).join('')}<td class="num"><b>${fmt(t)}</b></td><td class="num">${fmt(t*p.pp)}</td></tr>`}).join('')||'<tr><td class="empty">No products yet.</td></tr>'}</tbody></table></div></div>`]},
+report(){const cost=t=>DB[t].reduce((a,d)=>a+d.lines.reduce((b,l)=>b+l.qty*(P(l.code).pp||0),0),0),exp=DB.expenses.reduce((a,e)=>a+e.amount,0);
+ const sales=sum(DB.sale)-sum(DB.sret),gp=sales-(cost('sale')-cost('sret')),top={};
+ DB.sale.forEach(d=>d.lines.forEach(l=>{const t=top[l.code]=top[l.code]||{q:0,a:0};t.q+=l.qty;t.a+=l.qty*l.price}));
+ const r=(a,b)=>`<div class="row"><span>${a}</span><b>${fmt(b)} Ks</b></div>`;
+ return['Profit & Sales Summary',`<div class="grid two"><div class="card"><div class="card-h"><h3>Summary</h3></div><div class="card-b">${r('Net sales',sales)}${r('Purchases',sum(DB.purchase)-sum(DB.pret))}${r('Gross profit',gp)}${r('Expenses',exp)}${r('Net profit',gp-exp)}</div></div>
+ <div class="card"><div class="card-h"><h3>Top products</h3></div><div class="tbl-wrap"><table><tbody>${Object.entries(top).sort((a,b)=>b[1].a-a[1].a).slice(0,6).map(([c,t])=>`<tr><td>${esc(P(c).desc||c)}</td><td class="num">${t.q}</td><td class="num">${fmt(t.a)}</td></tr>`).join('')||'<tr><td class="empty">No sales yet.</td></tr>'}</tbody></table></div></div></div>`]},
+settings(){return['Settings',`<div class="card"><div class="card-b" style="max-width:420px"><div class="field"><label>Shop name (shown on printouts)</label><input class="input" id="shop" value="${esc(DB.shop)}"></div>
+ <button class="btn primary" onclick="DB.shop=$('#shop').value;save();toast('Saved')">Save</button>
+ <button class="btn d" style="margin-left:8px" onclick="if(confirm('Erase ALL data?')){localStorage.removeItem('retailpro');location.reload()}">Reset all data</button></div></div>`]}};
 </script>
 </body>
 </html>
