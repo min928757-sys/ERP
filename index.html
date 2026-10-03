@@ -179,6 +179,89 @@ dash(){const td=today();let val=0,low=[];S.products.forEach(p=>{const q=tq(p.cod
  <div class="card"><div class="card-h">Low stock (${low.length})</div><div class="card-b">${low.map(([p,q])=>`<div class="row"><span>${esc(p.description)}</span><b>${q} left</b></div>`).join('')||'<div class="empty">All items are well stocked</div>'}</div></div>`]},
 stock(){const s=stock(),L=S.locations;
  return['Stock Balance',`<div class="card"><div class="tw"><table><thead><tr><th>Code</th><th>Description</th>${L.map(l=>`<th class="num">${esc(l.name)}</th>`).join('')}<th class="num">Total</th><th class="num">Value</th></tr></thead><tbody>${S.products.map(p=>{const t=tq(p.code);return`<tr class="${t<=p.min_stock?'low':''}"><td>${esc(p.code)}</td><td>${esc(p.description)}</td>${L.map(l=>`<td class="num">${fmt((s[p.code]||{})[l.id])}</td>`).join('')}<td class="num"><b>${fmt(t)}</b></td><td class="num">${fmt(t*p.purchase_price)}</td></tr>`}).join('')||'<tr><td class="empty">No products yet.</td></tr>'}</tbody></table></div></div>`]}};
+/* ===== ADD-ON v2: icons, multi-shop, credit sales, profit & loss ===== */
+let T='',MY=[],PL={f:'',t:''};
+const IC={
+ dash:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+ sales:'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+ buy:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+ box:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+ card:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
+ users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>'};
+const svg=k=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
+document.head.insertAdjacentHTML('beforeend','<style>.ic{width:18px;height:18px;flex-shrink:0}.brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2f6df0,#1d5fd6);display:grid;place-items:center;margin-right:10px}.brand .logo .ic{width:17px;height:17px;color:#fff}.gh{font-size:13.5px;margin-top:2px}.gh span{flex:1}.badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}.badge.ok{background:#e6f6ee;color:#0f9d58}.badge.bad{background:#fdecea;color:#d92d20}.badge.warn{background:#fff4dd;color:#c77700}body.viewer [onclick*="mform"],body.viewer [onclick*="saveDoc"],body.viewer [onclick*="mdel"],body.viewer [onclick*="ddel"],body.viewer [onclick*="receive"]{display:none!important}</style>');
+document.querySelector('.brand').innerHTML='<span class="logo">'+svg('box')+'</span>RetailPro';
 
+NAV.length=0;NAV.push(['Dashboard','dash',[['dash','Dashboard']]],
+ ['Sales','sales',[['sale','New Sale Invoice'],['sale-r','Sale Records'],['recv','Unpaid / Receivables'],['sret','Sale Return'],['sret-r','Return Records'],['customers','Customers']]],
+ ['Purchase','buy',[['purchase','New Purchase Invoice'],['purchase-r','Purchase Records'],['pay','Unpaid / Payables'],['pret','Purchase Return'],['pret-r','Return Records'],['suppliers','Suppliers']]],
+ ['Inventory','box',[['products','Product Master'],['stock','Stock Balance'],['transfer','New Stock Transfer'],['transfer-r','Transfer Records'],['locations','Locations']]],
+ ['Accounts','card',[['expenses','Expenses'],['pl','Profit & Loss']]],
+ ['Shops & Team','users',[['shops','Shops & Access']]]);
+if(V.export)NAV.push(['Data','db',[['export','Data Export']]]);
+function buildNav(){$('#nav').innerHTML=NAV.map(([g,ic,it])=>it.length<2?`<button class="gh si" data-id="${it[0][0]}" onclick="go('${it[0][0]}')">${svg(ic)}<span>${g}</span></button>`:
+ `<div class="grp"><button class="gh" onclick="this.parentNode.classList.toggle('open')">${svg(ic)}<span>${g}</span><i>›</i></button><div class="sub">${it.map(([id,t])=>`<button class="si" data-id="${id}" onclick="go('${id}')">${t}</button>`).join('')}</div></div>`).join('')}
+
+/* ---- multi-shop ---- */
+async function loadShops(){const {data:pr}=await sb.from('profiles').select('tenant_id,role'),{data:ts}=await sb.from('tenants').select('id,name');
+ MY=(pr||[]).map(p=>({id:p.tenant_id,role:p.role,name:(ts||[]).find(t=>t.id===p.tenant_id)?.name||'Shop'}));return MY.length}
+function shopUI(){const m=MY.find(x=>x.id===T);shop=m.name;document.body.classList.toggle('viewer',m.role==='viewer');
+ $('#shop').innerHTML=`<select class="input" style="padding:5px 8px;width:auto;max-width:200px" onchange="swShop(this.value)">${MY.map(x=>`<option value="${x.id}" ${x.id===T?'selected':''}>${esc(x.name)}${x.role==='owner'?'':' ('+x.role+')'}</option>`).join('')}</select>`}
+async function swShop(id){T=id;try{localStorage.setItem('shopT',id)}catch(e){}shopUI();if(await load())go('dash')}
+async function start(){const {data:{session}}=await sb.auth.getSession();if(!session)return;
+ await sb.rpc('claim_invites');
+ if(!await loadShops()){const {error}=await sb.rpc('create_shop',{shop_name:session.user.user_metadata.shop||'My Shop'});if(error)return err(error.message);await loadShops()}
+ let sv=null;try{sv=localStorage.getItem('shopT')}catch(e){}
+ T=(MY.find(m=>m.id===sv)||MY[0]).id;shopUI();
+ if(!await load())return;$('#login').classList.add('hidden');$('#app').classList.remove('hidden');buildNav();go('dash')}
+async function load(){const q=t=>sb.from(t).select('*').eq('tenant_id',T);
+ const r=await Promise.all([q('locations'),q('products'),q('customers'),q('suppliers'),q('expenses'),sb.from('documents').select('*,document_lines(*),payments(*)').eq('tenant_id',T)]);
+ const bad=r.find(x=>x.error);if(bad){err(bad.error.message);toast(bad.error.message);return false}
+ [S.locations,S.products,S.customers,S.suppliers,S.expenses]=r.slice(0,5).map(x=>x.data);
+ S.docs=r[5].data.map(d=>({...d,lines:d.document_lines.map(l=>({code:l.product_code,desc:l.description,qty:+l.qty,price:+l.price,cost:+l.cost})),paid:d.payments.reduce((a,p)=>a+ +p.amount,0)}));return true}
+async function msave(id,rid){const c=M[id],o={};c.f.forEach(([k,,ty])=>o[k]=ty==='number'?+$('#f_'+k).value||0:$('#f_'+k).value.trim());
+ if(!o[c.f[0][0]]||!o[c.f[1][0]])return toast('Please fill '+c.f[0][1]+' and '+c.f[1][1]);
+ if(c.f[0][0]==='code'&&S[id].some(x=>x.code===o.code&&x.id!==rid))return toast('This code already exists');
+ const {error}=rid?await sb.from(id).update(o).eq('id',rid):await sb.from(id).insert({...o,tenant_id:T});if(error)return toast(error.message);
+ await load();mclose();toast('Saved');go(id)}
+async function newShop(){const n=$('#ns').value.trim();if(!n)return toast('Enter a shop name');const {data,error}=await sb.rpc('create_shop',{shop_name:n});if(error)return toast(error.message);await loadShops();await swShop(data);toast('Shop created')}
+async function invite(){const em=$('#iem').value.trim();if(!em)return toast('Enter an email');const {error}=await sb.rpc('invite_member',{p_tenant:$('#ish').value,p_email:em,p_role:$('#irl').value});if(error)return toast(error.message);$('#iem').value='';toast('Done. They will see this shop after they sign in.')}
+V.shops=()=>{const own=MY.filter(m=>m.role==='owner');
+ return['Shops & Team',`<div class="card"><div class="card-h">My shops</div><div class="tw"><table><thead><tr><th>Shop</th><th>My role</th><th></th></tr></thead><tbody>${MY.map(m=>`<tr><td>${esc(m.name)}${m.id===T?' <span class="badge ok">current</span>':''}</td><td>${m.role}</td><td class="act"><button class="btn sm" onclick="swShop('${m.id}')">Open</button></td></tr>`).join('')}</tbody></table></div></div>
+ <div class="card"><div class="card-h">Add another shop</div><div class="card-b hg"><div class="field"><label>Shop name</label><input class="input" id="ns"></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="newShop()">Create shop</button></div></div></div>
+ ${own.length?`<div class="card"><div class="card-h">Give another account access to a shop</div><div class="card-b hg"><div class="field"><label>Shop</label><select class="input" id="ish">${own.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div><div class="field"><label>Their email</label><input class="input" id="iem" type="email"></div><div class="field"><label>Role</label><select class="input" id="irl"><option value="viewer">Viewer (read only)</option><option value="cashier">Cashier</option><option value="manager">Manager</option></select></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="invite()">Give access</button></div></div></div>`:''}`]};
+
+/* ---- credit sales / purchases ---- */
+const _go=go;go=function(id,arg){_go(id,arg);if((id==='sale'||id==='purchase')&&!arg){cur.paytype='cash';const g=document.querySelector('.hg');
+ g&&g.insertAdjacentHTML('beforeend','<div class="field"><label>Payment</label><select class="input" onchange="cur.paytype=this.value"><option value="cash">Paid now</option><option value="credit">Credit (unpaid)</option></select></div>')}};
+async function saveDoc(){const type=cur.doc_type,isT=type==='transfer';
+ if(!cur.lines.length)return toast('Add at least one item');if(isT&&cur.location_id===cur.to_location_id)return toast('From and To must be different');
+ const keep=S.docs;S.docs=[...keep.filter(d=>d.id!==cur.id),cur];const bad=neg();S.docs=keep;if(bad)return toast('Not enough stock: '+bad);
+ const row={tenant_id:T,doc_type:type,doc_date:cur.doc_date,partner:isT?null:cur.partner,location_id:cur.location_id,to_location_id:isT?cur.to_location_id:null,note:cur.note};
+ let id=cur.id,r;const isNew=!id;
+ if(id){r=await sb.from('documents').update(row).eq('id',id);if(r.error)return toast(r.error.message);await sb.from('document_lines').delete().eq('document_id',id)}
+ else{row.doc_no=nextNo(type);r=await sb.from('documents').insert(row).select().single();if(r.error)return toast(r.error.message);id=r.data.id;cur.doc_no=row.doc_no}
+ r=await sb.from('document_lines').insert(cur.lines.map(l=>({tenant_id:T,document_id:id,product_code:l.code,description:l.desc,qty:l.qty,price:l.price,cost:l.cost||P(l.code).purchase_price||0})));if(r.error)return toast(r.error.message);
+ if(isNew&&(type==='sale'||type==='purchase')&&cur.paytype!=='credit'&&dt(cur)>0)await sb.from('payments').insert({tenant_id:T,document_id:id,amount:dt(cur),note:'Paid at invoice'});
+ await load();toast('Saved '+cur.doc_no);if(confirm('Saved. Print now?'))printDoc(cur);go(type+'-r')}
+function owing(type){const isS=type==='sale',rows=dd(type).map(d=>({d,t:dt(d),p:d.paid||0})).filter(x=>x.t-x.p>0.0001).sort((a,b)=>a.d.doc_date.localeCompare(b.d.doc_date));
+ return[isS?'Unpaid Sales (Receivables)':'Unpaid Purchases (Payables)',`<div class="page-head"><b>${rows.length} unpaid · ${fmt(rows.reduce((a,x)=>a+x.t-x.p,0))} Ks outstanding</b></div>
+ <div class="card"><div class="tw"><table><thead><tr><th>No.</th><th>Date</th><th>${isS?'Customer':'Supplier'}</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(({d,t,p})=>`<tr><td><b>${d.doc_no}</b></td><td>${d.doc_date}</td><td>${esc(d.partner)}</td><td class="num">${fmt(t)}</td><td class="num">${fmt(p)}</td><td class="num"><b>${fmt(t-p)}</b></td><td>${p>0?'<span class="badge warn">Partial</span>':'<span class="badge bad">Unpaid</span>'}</td><td class="act"><button class="btn sm ok" onclick="receive('${d.id}')">${isS?'Receive payment':'Pay'}</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">Nothing outstanding.</td></tr>'}</tbody></table></div></div>`]}
+V.recv=()=>owing('sale');V.pay=()=>owing('purchase');
+async function receive(id){const d=S.docs.find(x=>x.id===id),bal=dt(d)-(d.paid||0);
+ const a=prompt('Amount (balance '+fmt(bal)+'). Press OK to settle in full.',bal);if(a===null)return;const n=+a;if(!(n>0)||n>bal+0.0001)return toast('Enter an amount up to '+fmt(bal));
+ const {error}=await sb.from('payments').insert({tenant_id:T,document_id:id,amount:n});if(error)return toast(error.message);await load();toast(n>=bal-0.0001?'Marked as paid':'Partial payment saved');go(D[d.doc_type].s<0?'recv':'pay')}
+
+/* ---- profit & loss ---- */
+V.pl=()=>{const f=PL.f||today().slice(0,8)+'01',t=PL.t||today(),inR=d=>d.doc_date>=f&&d.doc_date<=t,ds=k=>dd(k).filter(inR),
+ cg=a=>a.reduce((x,d)=>x+d.lines.reduce((y,l)=>y+l.qty*(l.cost||P(l.code).purchase_price||0),0),0),
+ rev=sum(ds('sale'))-sum(ds('sret')),cost=cg(ds('sale'))-cg(ds('sret')),gp=rev-cost,
+ ex=S.expenses.filter(e=>e.expense_date>=f&&e.expense_date<=t).reduce((a,e)=>a+ +e.amount,0),
+ ow=k=>sum(dd(k))-dd(k).reduce((a,d)=>a+(d.paid||0),0),
+ r=(a,b,s)=>`<div class="row" style="${s||''}"><span>${a}</span><b>${fmt(b)} Ks</b></div>`;
+ return['Profit & Loss',`<div class="page-head"><div class="tools"><input class="input" style="width:auto" type="date" value="${f}" onchange="PL.f=this.value;go('pl')"><input class="input" style="width:auto" type="date" value="${t}" onchange="PL.t=this.value;go('pl')"></div></div>
+ <div class="card"><div class="card-h">${f} to ${t}</div><div class="card-b">${r('Net sales (after returns)',rev)}${r('Cost of goods sold',cost)}${r('Gross profit',gp,'font-weight:700')}${r('Expenses',ex)}${r('Net profit',gp-ex,'font-weight:700;font-size:16px')}<p class="mu" style="margin-top:10px">Gross margin: ${rev?(gp/rev*100).toFixed(1):0}%</p></div></div>
+ <div class="card"><div class="card-h">Credit position (all time)</div><div class="card-b">${r('Customers owe you',ow('sale'))}${r('You owe suppliers',ow('purchase'))}</div></div>`]};
 start();
 </script></body></html>
