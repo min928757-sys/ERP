@@ -263,5 +263,36 @@ V.pl=()=>{const f=PL.f||today().slice(0,8)+'01',t=PL.t||today(),inR=d=>d.doc_dat
  return['Profit & Loss',`<div class="page-head"><div class="tools"><input class="input" style="width:auto" type="date" value="${f}" onchange="PL.f=this.value;go('pl')"><input class="input" style="width:auto" type="date" value="${t}" onchange="PL.t=this.value;go('pl')"></div></div>
  <div class="card"><div class="card-h">${f} to ${t}</div><div class="card-b">${r('Net sales (after returns)',rev)}${r('Cost of goods sold',cost)}${r('Gross profit',gp,'font-weight:700')}${r('Expenses',ex)}${r('Net profit',gp-ex,'font-weight:700;font-size:16px')}<p class="mu" style="margin-top:10px">Gross margin: ${rev?(gp/rev*100).toFixed(1):0}%</p></div></div>
  <div class="card"><div class="card-h">Credit position (all time)</div><div class="card-b">${r('Customers owe you',ow('sale'))}${r('You owe suppliers',ow('purchase'))}</div></div>`]};
-start();
+/* ===== ADD-ON v4: delete shop, change password, forgot password ===== */
+async function delShop(){
+ const id=$('#dsh').value,m=MY.find(x=>x.id===id);if(!m)return;
+ if($('#dnm').value.trim()!==m.name)return toast('Type the shop name exactly to confirm');
+ if(!confirm('Permanently delete "'+m.name+'" and ALL its data? This cannot be undone.'))return;
+ const {error}=await sb.rpc('delete_shop',{p_tenant:id});if(error)return toast(error.message);
+ await loadShops();if(!MY.some(x=>x.id===T))T=MY[0].id;shopUI();await load();toast('Shop deleted');go('shops')}
+async function changePw(){const a=$('#np1').value,b=$('#np2').value;
+ if(a.length<6)return toast('Password needs 6+ characters');if(a!==b)return toast('Passwords do not match');
+ const {error}=await sb.auth.updateUser({password:a});if(error)return toast(error.message);
+ $('#np1').value=$('#np2').value='';toast('Password changed')}
+const _shops4=V.shops;
+V.shops=()=>{const [t,h]=_shops4(),own=MY.filter(m=>m.role==='owner');
+ const del=MY.length<2?'<p class="mu">You need at least two shops before one can be deleted.</p>':!own.length?'<p class="mu">Only an owner can delete a shop.</p>':
+ `<p class="mu" style="margin-bottom:12px">This deletes the shop with all its products, invoices, stock and payments. It cannot be undone. Open that shop first (top-right dropdown) and download a Full backup from Data Export.</p>
+ <div class="hg"><div class="field"><label>Shop to delete</label><select class="input" id="dsh">${own.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div>
+ <div class="field"><label>Type the shop name to confirm</label><input class="input" id="dnm"></div>
+ <div class="field"><label>&nbsp;</label><button class="btn d" onclick="delShop()">Delete shop</button></div></div>`;
+ return[t,h+`<div class="card"><div class="card-h">Change my password</div><div class="card-b hg"><div class="field"><label>New password</label><input class="input" id="np1" type="password"></div><div class="field"><label>Repeat new password</label><input class="input" id="np2" type="password"></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="changePw()">Change password</button></div></div></div>
+ <div class="card"><div class="card-h" style="color:var(--bad)">Delete a shop</div><div class="card-b">${del}</div></div>`]};
+
+/* forgot password (login screen) */
+$('#go').insertAdjacentHTML('afterend','<p style="text-align:center;margin-top:12px"><a href="#" style="color:var(--pr);font-size:13px" onclick="forgotPw();return false">Forgot password?</a></p>');
+async function forgotPw(){const e=$('#em').value.trim();if(!e)return err('Enter your email above first');
+ const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
+ err(error?error.message:'If this email has an account, a reset link has been sent.')}
+sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){
+ $('#modal').innerHTML='<div class="mbox"><h3>Set a new password</h3><div class="field"><label>New password (6+ characters)</label><input class="input" id="rp" type="password"></div><div class="mact"><button class="btn primary" onclick="rpSave()">Save</button></div></div>';
+ $('#modal').classList.add('show')}});
+async function rpSave(){const p=$('#rp').value;if(p.length<6)return toast('Password needs 6+ characters');
+ const {error}=await sb.auth.updateUser({password:p});if(error)return toast(error.message);mclose();toast('Password updated')}
+ start();
 </script></body></html>
