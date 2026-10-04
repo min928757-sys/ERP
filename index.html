@@ -294,5 +294,52 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){
  $('#modal').classList.add('show')}});
 async function rpSave(){const p=$('#rp').value;if(p.length<6)return toast('Password needs 6+ characters');
  const {error}=await sb.auth.updateUser({password:p});if(error)return toast(error.message);mclose();toast('Password updated')}
+ /* ===== ADD-ON v5: Excel export (all reports) + backup ===== */
+const X={f:'',t:''};
+function xlLoad(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const u=['/lib/xlsx/0.18.5/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];let i=0;const t=()=>{if(i>=u.length)return no();const s=document.createElement('script');s.src=u[i++];s.onload=ok;s.onerror=()=>{s.remove();t()};document.head.appendChild(s)};t()})}
+const xLoc=d=>typeof LF==='undefined'||!LF||d.location_id===LF||d.to_location_id===LF;
+const xIn=d=>(!X.f||d.doc_date>=X.f)&&(!X.t||d.doc_date<=X.t);
+const xD=(type,dated=true)=>S.docs.filter(d=>d.doc_type===type&&xLoc(d)&&(!dated||xIn(d))).sort((a,b)=>a.doc_date.localeCompare(b.doc_date)||a.doc_no.localeCompare(b.doc_no));
+const xT=d=>d.lines.reduce((a,l)=>a+l.qty*l.price,0),xP=d=>d.paid===undefined?xT(d):d.paid,xC=l=>l.cost||P(l.code).purchase_price||0;
+const xSt=d=>{const b=xT(d)-xP(d);return b<=0.0001?'Paid':xP(d)>0?'Partial':'Unpaid'};
+const xAge=d=>Math.max(0,Math.floor((Date.now()-new Date(d.doc_date))/864e5));
+const xSum=t=>[['Doc No','Date',t==='sale'?'Customer':'Supplier','Location','Items','Total','Paid','Balance','Status'],...xD(t).map(d=>[d.doc_no,d.doc_date,d.partner,ln(d.location_id),d.lines.length,xT(d),xP(d),xT(d)-xP(d),xSt(d)])];
+const xItems=t=>{const s=t==='sale';return[['Doc No','Date',s?'Customer':'Supplier','Location','Code','Description','Qty','Price','Amount',...(s?['Cost','Profit']:[])],...xD(t).flatMap(d=>d.lines.map(l=>[d.doc_no,d.doc_date,d.partner,ln(d.location_id),l.code,l.desc,l.qty,l.price,l.qty*l.price,...(s?[xC(l)*l.qty,l.qty*(l.price-xC(l))]:[])]))]};
+const xOwe=t=>[['Doc No','Date',t==='sale'?'Customer':'Supplier','Location','Total','Paid','Balance','Days outstanding'],...xD(t,false).filter(d=>xT(d)-xP(d)>0.0001).map(d=>[d.doc_no,d.doc_date,d.partner,ln(d.location_id),xT(d),xP(d),xT(d)-xP(d),xAge(d)])];
+const SH={
+'Stock Balance':()=>{const s=stock(),L=S.locations;return[['Code','Description','Unit',...L.map(l=>l.name),'Total','Purchase Price','Sale Price','Stock Value (cost)','Min Stock','Status'],
+ ...S.products.map(p=>{const t=tq(p.code);return[p.code,p.description,p.unit,...L.map(l=>(s[p.code]||{})[l.id]||0),t,p.purchase_price,p.sale_price,t*p.purchase_price,p.min_stock,t<=p.min_stock?'Low stock':'OK']})]},
+'Sales Summary':()=>xSum('sale'),'Sales Items':()=>xItems('sale'),
+'Purchase Summary':()=>xSum('purchase'),'Purchase Items':()=>xItems('purchase'),
+'Returns':()=>[['Doc No','Type','Date','Partner','Location','Code','Description','Qty','Price','Amount'],...[...xD('sret'),...xD('pret')].flatMap(d=>d.lines.map(l=>[d.doc_no,D[d.doc_type].t,d.doc_date,d.partner,ln(d.location_id),l.code,l.desc,l.qty,l.price,l.qty*l.price]))],
+'Transfers':()=>[['Doc No','Date','From','To','Code','Description','Qty','Note'],...xD('transfer').flatMap(d=>d.lines.map(l=>[d.doc_no,d.doc_date,ln(d.location_id),ln(d.to_location_id),l.code,l.desc,l.qty,d.note]))],
+'Unpaid Sales':()=>xOwe('sale'),'Unpaid Purchases':()=>xOwe('purchase'),
+'Profit and Loss':()=>{const m={},g=k=>m[k]=m[k]||{r:0,c:0,e:0};
+ [['sale',1],['sret',-1]].forEach(([t,sg])=>xD(t).forEach(d=>{const o=g(d.doc_date.slice(0,7));o.r+=sg*xT(d);o.c+=sg*d.lines.reduce((a,l)=>a+l.qty*xC(l),0)}));
+ S.expenses.filter(e=>(!X.f||e.expense_date>=X.f)&&(!X.t||e.expense_date<=X.t)).forEach(e=>{g(e.expense_date.slice(0,7)).e+=+e.amount});
+ const rows=Object.keys(m).sort().map(k=>[k,m[k].r,m[k].c,m[k].r-m[k].c,m[k].e,m[k].r-m[k].c-m[k].e]);
+ return[['Month','Net sales','Cost of goods sold','Gross profit','Expenses','Net profit'],...rows,['TOTAL',...[1,2,3,4,5].map(i=>rows.reduce((a,r)=>a+r[i],0))]]},
+'Products':()=>[['Code','Description','Purchase Price','Sale Price','Unit','Min Stock'],...S.products.map(p=>[p.code,p.description,p.purchase_price,p.sale_price,p.unit,p.min_stock])],
+'Customers':()=>[['Code','Name','Phone','Address'],...S.customers.map(r=>[r.code,r.name,r.phone,r.address])],
+'Suppliers':()=>[['Code','Name','Phone','Address'],...S.suppliers.map(r=>[r.code,r.name,r.phone,r.address])],
+'Expenses':()=>[['Date','Description','Amount'],...S.expenses.map(r=>[r.expense_date,r.description,r.amount])]};
+const REP=[['Stock Balance','Stock by location, stock value, low-stock flag'],['Sales Summary','One row per sale invoice (paid / partial / unpaid)'],['Sales Items','Every item sold, with cost and profit'],['Purchase Summary','One row per purchase invoice'],['Purchase Items','Every item purchased'],['Returns','Sale and purchase returns'],['Transfers','Stock moved between locations'],['Unpaid Sales','Customers who still owe you'],['Unpaid Purchases','What you still owe suppliers'],['Profit and Loss','Monthly sales, cost, gross and net profit'],['Products','Product master'],['Customers','Customer list'],['Suppliers','Supplier list'],['Expenses','Expense list']];
+async function xlsx(names,file){try{await xlLoad()}catch(e){return toast('Excel library could not load. Check your connection and try again.')}
+ const wb=XLSX.utils.book_new();
+ names.forEach(n=>{const r=SH[n](),ws=XLSX.utils.aoa_to_sheet(r);ws['!cols']=r[0].map((_,i)=>({wch:Math.min(40,Math.max(8,...r.slice(0,200).map(x=>String(x[i]??'').length))+2)}));XLSX.utils.book_append_sheet(wb,ws,n)});
+ XLSX.writeFile(wb,file+'_'+today()+'.xlsx');
+ try{localStorage.setItem('lastExport',new Date().toLocaleString())}catch(e){}toast('Excel downloaded')}
+function xBackup(){const o={shop,exported_at:new Date().toISOString(),locations:S.locations,products:S.products,customers:S.customers,suppliers:S.suppliers,expenses:S.expenses,documents:S.docs};
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download='retailpro_backup_'+today()+'.json';
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ try{localStorage.setItem('lastExport',new Date().toLocaleString())}catch(e){}toast('Backup downloaded')}
+V.export=()=>{let last='Never';try{last=localStorage.getItem('lastExport')||'Never'}catch(e){}
+ return['Data Export',`<div class="card"><div class="card-h">Backup data</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Saves everything of the current shop (products, customers, invoices, payments, expenses) in one file. Last export on this device: <b>${esc(last)}</b></p>
+ <button class="btn ok" onclick="xBackup()">Download backup (.json)</button></div></div>
+ <div class="card"><div class="card-h">Excel reports</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Date range applies to sales, purchases, returns, transfers and profit. Stock balance and unpaid lists always show the current position. If you chose a location at the top, only that location is included.</p>
+ <div class="hg"><div class="field"><label>From</label><input class="input" type="date" value="${X.f}" onchange="X.f=this.value"></div><div class="field"><label>To</label><input class="input" type="date" value="${X.t}" onchange="X.t=this.value"></div>
+ <div class="field"><label>&nbsp;</label><button class="btn primary" onclick="xlsx(REP.map(r=>r[0]),'retailpro_all_reports')">All reports in one Excel</button></div></div></div>
+ <div class="tw"><table><tbody>${REP.map(([n,t])=>`<tr><td><b>${n}</b><br><span class="mu">${t}</span></td><td class="act"><button class="btn sm" onclick="xlsx(['${n}'],'${n.toLowerCase().replace(/ /g,'_')}')">Excel</button></td></tr>`).join('')}</tbody></table></div></div>`]};
+if(!NAV.some(g=>g[0]==='Data'))NAV.push(['Data',typeof svg==='function'?'db':'💾',[['export','Data Export']]]);
  start();
 </script></body></html>
