@@ -417,5 +417,28 @@ async function rmMember(tid,uid,email){
  if(error)return toast(error.message);toast('Access removed');loadMembers()}
 const _shops7=V.shops;
 V.shops=()=>{const r=_shops7();return[r[0],r[1]+'<div class="card"><div class="card-h">Who has access to my shops</div><div class="card-b" id="mem"><p class="mu">Loading...</p></div></div>',()=>{r[2]&&r[2]();loadMembers()}]};
+/* ===== ADD-ON v8: super admin - client list, access list, read-only support view ===== */
+let CL=[],SUP=null;
+const _bn8=buildNav;
+buildNav=function(){_bn8();
+ if(SUP===null){SUP=false;sb.rpc('is_super').then(({data})=>{if(data!==true)return;SUP=true;
+  if(!NAV.some(g=>g[0]==='Clients'))NAV.push(['Clients',typeof svg==='function'?'users':'👥',[['clients','Client Accounts']]]);
+  const cur=document.querySelector('.si.on')?.dataset.id;_bn8();
+  if(cur)document.querySelectorAll('.si').forEach(b=>b.classList.toggle('on',b.dataset.id===cur))})}};
+V.clients=()=>['Client Accounts',`<div class="page-head"><b id="cl_n">Loading...</b><input class="input" style="max-width:240px" id="cl_q" placeholder="Search client or email..." oninput="clDraw()"></div><div class="card"><div class="tw" id="cl"></div></div>`,clLoad];
+async function clLoad(){const {data,error}=await sb.rpc('admin_clients');if(error){$('#cl').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}CL=data;clDraw()}
+function clDraw(){const q=($('#cl_q')?.value||'').toLowerCase(),rows=CL.filter(c=>(c.c_shop+' '+(c.c_owner||'')).toLowerCase().includes(q));
+ $('#cl_n').textContent=CL.length+' clients'+(q?' ('+rows.length+' shown)':'');
+ $('#cl').innerHTML=`<table><thead><tr><th>Client</th><th>Owner email</th><th>Created</th><th>Last login</th><th class="num">Users</th><th class="num">Products</th><th class="num">Invoices</th><th></th></tr></thead><tbody>${rows.map(c=>{const ll=c.c_last?new Date(c.c_last):null,d=ll?Math.floor((Date.now()-ll)/864e5):0;
+  return`<tr><td><b>${esc(c.c_shop)}</b></td><td>${esc(c.c_owner||'-')}</td><td>${c.c_created}</td><td>${ll?ll.toISOString().slice(0,10)+(d>30?' <span class="badge warn">'+d+'d ago</span>':''):'<span class="mu">never</span>'}</td><td class="num">${c.c_members}</td><td class="num">${fmt(c.c_products)}</td><td class="num">${fmt(c.c_docs)}</td><td class="act"><button class="btn sm" onclick="clAccess('${c.c_tenant}')">Access</button><button class="btn sm primary" onclick="clView('${c.c_tenant}')">View</button></td></tr>`}).join('')||'<tr><td colspan="8" class="empty">No clients found.</td></tr>'}</tbody></table>`}
+async function clAccess(id){const c=CL.find(x=>x.c_tenant===id),{data,error}=await sb.rpc('admin_members',{p_tenant:id});if(error)return toast(error.message);
+ $('#modal').innerHTML=`<div class="mbox"><h3>${esc(c.c_shop)}: who has access</h3><div class="tw"><table><thead><tr><th>Email</th><th>Role</th><th>Last login</th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc(r.m_email)}${r.m_pending?' <span class="badge warn">invited</span>':''}</td><td>${esc(r.m_role)}</td><td>${r.m_last?String(r.m_last).slice(0,10):'-'}</td></tr>`).join('')}</tbody></table></div><div class="mact" style="margin-top:12px"><button class="btn" onclick="mclose()">Close</button></div></div>`;
+ $('#modal').classList.add('show')}
+async function clView(id){const c=CL.find(x=>x.c_tenant===id);
+ if(!confirm('Open "'+c.c_shop+'" in read-only support view? This visit is recorded in the access log.'))return;
+ const {error}=await sb.rpc('log_support',{p_tenant:id});if(error)return toast(error.message);
+ T=id;shop=c.c_shop;document.body.classList.add('viewer');
+ $('#shop').innerHTML='<span class="badge warn">Support view (read only): '+esc(c.c_shop)+'</span> <button class="btn sm" onclick="location.reload()">Exit</button>';
+ if(await load())go('dash')}
  start();
 </script></body></html>
