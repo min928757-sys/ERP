@@ -341,5 +341,65 @@ V.export=()=>{let last='Never';try{last=localStorage.getItem('lastExport')||'Nev
  <div class="field"><label>&nbsp;</label><button class="btn primary" onclick="xlsx(REP.map(r=>r[0]),'retailpro_all_reports')">All reports in one Excel</button></div></div></div>
  <div class="tw"><table><tbody>${REP.map(([n,t])=>`<tr><td><b>${n}</b><br><span class="mu">${t}</span></td><td class="act"><button class="btn sm" onclick="xlsx(['${n}'],'${n.toLowerCase().replace(/ /g,'_')}')">Excel</button></td></tr>`).join('')}</tbody></table></div></div>`]};
 if(!NAV.some(g=>g[0]==='Data'))NAV.push(['Data',typeof svg==='function'?'db':'💾',[['export','Data Export']]]);
+/* ===== ADD-ON v6: simple Excel page for customers + admin-only backup/restore ===== */
+V.export=()=>['Export to Excel',`<div class="card"><div class="card-b"><p class="mu" style="margin-bottom:12px">Download your reports as Excel files. The date range applies to sales, purchases, returns and profit. If you picked a location at the top of the page, only that location is included.</p>
+ <div class="hg"><div class="field"><label>From</label><input class="input" type="date" value="${X.f}" onchange="X.f=this.value"></div><div class="field"><label>To</label><input class="input" type="date" value="${X.t}" onchange="X.t=this.value"></div>
+ <div class="field"><label>&nbsp;</label><button class="btn primary" onclick="xlsx(REP.map(r=>r[0]),'retailpro_all_reports')">Download all reports</button></div></div></div>
+ <div class="tw"><table><tbody>${REP.map(([n,t])=>`<tr><td><b>${n}</b><br><span class="mu">${t}</span></td><td class="act"><button class="btn sm" onclick="xlsx(['${n}'],'${n.toLowerCase().replace(/ /g,'_')}')">Excel</button></td></tr>`).join('')}</tbody></table></div></div>`];
+
+/* ---- admin tools: open the site with #admin at the end of the link ---- */
+V.admin=()=>['Admin tools',`<div class="card"><div class="card-h">Current shop: ${esc(shop)}</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Everything here applies to this shop only. Check the shop name (top right) before you start.</p>
+ <button class="btn ok" onclick="xBackup()">Download backup (.json)</button></div></div>
+ <div class="card"><div class="card-h">Restore from a backup file</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Adds the records that are missing from this shop. It never changes or deletes existing records.</p>
+ <div class="hg"><div class="field"><label>Backup file (.json)</label><input class="input" id="rf" type="file" accept=".json,application/json"></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="rsCheck()">Check file</button></div></div><div id="rs_out"></div></div></div>`];
+
+let RB=null;
+async function rsCheck(){
+ const f=$('#rf').files[0];if(!f)return toast('Choose a backup file first');
+ let b;try{b=JSON.parse(await f.text())}catch(e){return toast('This file is not a valid backup')}
+ if(!Array.isArray(b.documents)||!Array.isArray(b.products)||!Array.isArray(b.locations))return toast('This is not a RetailPro backup file');
+ const by=(a,k)=>r=>!(a||[]).some(x=>x[k]===r[k]);
+ const loc=b.locations.filter(by(S.locations,'code')),prod=b.products.filter(by(S.products,'code')),
+  cust=(b.customers||[]).filter(by(S.customers,'code')),supp=(b.suppliers||[]).filter(by(S.suppliers,'code')),
+  exp=(b.expenses||[]).filter(r=>!S.expenses.some(x=>x.expense_date===r.expense_date&&x.description===r.description&&+x.amount===+r.amount)),
+  docs=b.documents.filter(d=>!S.docs.some(x=>x.doc_type===d.doc_type&&x.doc_no===d.doc_no));
+ const n=loc.length+prod.length+cust.length+supp.length+exp.length+docs.length;RB={b,loc,prod,cust,supp,exp,docs,n};
+ $('#rs_out').innerHTML=`<div style="margin-top:14px"><p>Backup of <b>${esc(b.shop)}</b>, ${esc((b.exported_at||'').slice(0,10))}. Current shop: <b>${esc(shop)}</b>.</p>
+ ${b.shop!==shop?'<p style="color:var(--bad);margin-top:6px">The shop names are different. Make sure this is the right shop.</p>':''}
+ <div class="tw"><table><tbody>${[['Locations',loc],['Products',prod],['Customers',cust],['Suppliers',supp],['Expenses',exp],['Invoices and other documents',docs]].map(([k,a])=>`<tr><td>${k}</td><td class="num">${a.length} missing</td></tr>`).join('')}</tbody></table></div>
+ ${n?`<button class="btn ok" style="margin-top:12px" id="rs_go" onclick="rsRun()">Restore ${n} missing records</button>`:'<p class="mu" style="margin-top:10px">Nothing to restore. Everything in this file already exists in this shop.</p>'}</div>`}
+async function rsRun(){
+ if(!RB)return;const {b,loc,prod,cust,supp,exp,docs,n}=RB;
+ if(b.shop!==shop&&!confirm('This backup is from "'+b.shop+'" but you are in "'+shop+'". Continue?'))return;
+ if(!confirm('Add '+n+' missing records to "'+shop+'"? Existing records will not be changed.'))return;
+ const btn=$('#rs_go');btn.disabled=true;btn.textContent='Restoring...';
+ const ins=async(t,rows,sel)=>{let out=[];for(let i=0;i<rows.length;i+=300){const q=sb.from(t).insert(rows.slice(i,i+300));const r=sel?await q.select(sel):await q;if(r.error)throw new Error(t+': '+r.error.message);if(r.data)out=out.concat(r.data)}return out};
+ let made=[],skipped=0;
+ try{
+  await ins('locations',loc.map(r=>({tenant_id:T,code:r.code,name:r.name})));
+  await ins('products',prod.map(r=>({tenant_id:T,code:r.code,description:r.description,purchase_price:r.purchase_price,sale_price:r.sale_price,unit:r.unit,min_stock:r.min_stock})));
+  await ins('customers',cust.map(r=>({tenant_id:T,code:r.code,name:r.name,phone:r.phone,address:r.address})));
+  await ins('suppliers',supp.map(r=>({tenant_id:T,code:r.code,name:r.name,phone:r.phone,address:r.address})));
+  await ins('expenses',exp.map(r=>({tenant_id:T,expense_date:r.expense_date,description:r.description,amount:r.amount})));
+  const lr=await sb.from('locations').select('id,code').eq('tenant_id',T);if(lr.error)throw new Error(lr.error.message);
+  const byCode=Object.fromEntries(lr.data.map(l=>[l.code,l.id])),map={};b.locations.forEach(l=>map[l.id]=byCode[l.code]);
+  const ok=docs.filter(d=>map[d.location_id]&&(!d.to_location_id||map[d.to_location_id]));skipped=docs.length-ok.length;
+  made=await ins('documents',ok.map(d=>({tenant_id:T,doc_type:d.doc_type,doc_no:d.doc_no,doc_date:d.doc_date,partner:d.partner,location_id:map[d.location_id],to_location_id:d.to_location_id?map[d.to_location_id]:null,note:d.note})),'id,doc_type,doc_no');
+  const idOf={};made.forEach(m=>idOf[m.doc_type+'|'+m.doc_no]=m.id);const lines=[],pays=[];
+  ok.forEach(d=>{const id=idOf[d.doc_type+'|'+d.doc_no];if(!id)return;const ls=d.lines||[];
+   ls.forEach(l=>lines.push({tenant_id:T,document_id:id,product_code:l.code,description:l.desc,qty:l.qty,price:l.price,cost:l.cost||0}));
+   if(Array.isArray(d.payments))d.payments.forEach(p=>pays.push({tenant_id:T,document_id:id,pay_date:p.pay_date||today(),amount:p.amount,note:p.note}));
+   else if(d.doc_type==='sale'||d.doc_type==='purchase'){const t=ls.reduce((a,l)=>a+l.qty*l.price,0);if(t>0)pays.push({tenant_id:T,document_id:id,amount:t,note:'Restored (paid)'})}});
+  await ins('document_lines',lines);await ins('payments',pays);
+ }catch(e){
+  if(made.length)await sb.from('documents').delete().in('id',made.map(m=>m.id));
+  btn.disabled=false;btn.textContent='Restore '+n+' missing records';return toast('Restore stopped: '+e.message)}
+ RB=null;await load();$('#rs_out').innerHTML=`<p style="margin-top:14px"><b>Done.</b> ${n-skipped} records restored.${skipped?' '+skipped+' documents were skipped because their location is not in the file.':''}</p>`;toast('Restore finished')}
+
+/* admin menu appears only when the link ends with #admin */
+if(typeof IC!=='undefined')IC.tool='<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.77 3.77z"/>';
+function adminNav(){if(!NAV.some(g=>g[0]==='Admin tools'))NAV.push(['Admin tools','tool',[['admin','Backup & Restore']]]);if(!$('#app').classList.contains('hidden'))buildNav()}
+if(location.hash==='#admin')adminNav();
+addEventListener('hashchange',()=>{if(location.hash==='#admin')adminNav()});
  start();
 </script></body></html>
