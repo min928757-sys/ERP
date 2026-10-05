@@ -440,5 +440,43 @@ async function clView(id){const c=CL.find(x=>x.c_tenant===id);
  T=id;shop=c.c_shop;document.body.classList.add('viewer');
  $('#shop').innerHTML='<span class="badge warn">Support view (read only): '+esc(c.c_shop)+'</span> <button class="btn sm" onclick="location.reload()">Exit</button>';
  if(await load())go('dash')}
+ /* ===== ADD-ON v10: approve / pause shops (super admin) ===== */
+loadShops=async function(){
+ const {data:pr}=await sb.from('profiles').select('tenant_id,role'),{data:ts}=await sb.from('tenants').select('id,name,status');
+ MY=(pr||[]).map(p=>{const t=(ts||[]).find(x=>x.id===p.tenant_id)||{};return{id:p.tenant_id,role:p.role,name:t.name||'Shop',status:t.status||'active'}});
+ return MY.length};
+
+const _shopUI10=shopUI;
+shopUI=function(){
+ _shopUI10();
+ const m=MY.find(x=>x.id===T),st=(m&&m.status)||'active';
+ if(st!=='active')document.body.classList.add('viewer');
+ let b=document.getElementById('sbn');
+ if(!b){b=document.createElement('div');b.id='sbn';b.style.cssText='padding:10px 20px;font-size:13px;font-weight:600;display:none';document.querySelector('.top').after(b)}
+ if(st==='pending'){b.style.background='#fff4dd';b.style.color='#8a5300';b.textContent='Your account is waiting for approval. You can look around, but you can add data only after it is approved.';b.style.display='block'}
+ else if(st==='paused'){b.style.background='#fdecea';b.style.color='#b42318';b.textContent='This shop is paused. You can view and download your data but cannot add or change records. Please contact your service provider.';b.style.display='block'}
+ else b.style.display='none'};
+
+clDraw=function(){
+ const q=($('#cl_q')?.value||'').toLowerCase(),ord={pending:0,paused:1,active:2},
+  rows=CL.filter(c=>(c.c_shop+' '+(c.c_owner||'')).toLowerCase().includes(q)).sort((a,b)=>(ord[a.c_status]??2)-(ord[b.c_status]??2)),
+  np=CL.filter(c=>c.c_status==='pending').length,
+  bd={pending:'<span class="badge warn">Waiting</span>',active:'<span class="badge ok">Active</span>',paused:'<span class="badge bad">Paused</span>'};
+ $('#cl_n').innerHTML=CL.length+' clients'+(np?' &middot; <span class="badge warn">'+np+' waiting for approval</span>':'');
+ $('#cl').innerHTML=`<table><thead><tr><th>Client</th><th>Status</th><th>Owner email</th><th>Created</th><th>Last login</th><th class="num">Invoices</th><th>Note</th><th></th></tr></thead><tbody>${rows.map(c=>{
+  const ll=c.c_last?new Date(c.c_last):null,d=ll?Math.floor((Date.now()-ll)/864e5):0,
+   act=c.c_status==='active'?`<button class="btn sm d" onclick="clSet('${c.c_tenant}','paused')">Pause</button>`:`<button class="btn sm ok" onclick="clSet('${c.c_tenant}','active')">${c.c_status==='pending'?'Approve':'Resume'}</button>`;
+  return`<tr><td><b>${esc(c.c_shop)}</b></td><td>${bd[c.c_status]||''}</td><td>${esc(c.c_owner||'-')}</td><td>${c.c_created}</td><td>${ll?ll.toISOString().slice(0,10)+(d>30?' <span class="badge warn">'+d+'d ago</span>':''):'<span class="mu">never</span>'}</td><td class="num">${fmt(c.c_docs)}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${esc(c.c_note||'')}">${esc(c.c_note||'')}</td><td class="act">${act}<button class="btn sm" onclick="clNote('${c.c_tenant}')">Note</button><button class="btn sm" onclick="clAccess('${c.c_tenant}')">Access</button><button class="btn sm primary" onclick="clView('${c.c_tenant}')">View</button></td></tr>`}).join('')||'<tr><td colspan="8" class="empty">No clients found.</td></tr>'}</tbody></table>`};
+
+async function clSet(id,st){
+ const c=CL.find(x=>x.c_tenant===id);let note=null;
+ if(st==='paused'){note=prompt('Pause "'+c.c_shop+'". Reason (only you can see this):',c.c_note||'');if(note===null)return}
+ else if(!confirm((c.c_status==='pending'?'Approve':'Resume')+' "'+c.c_shop+'"?'))return;
+ const {error}=await sb.rpc('admin_set_status',{p_tenant:id,p_status:st,p_note:note});
+ if(error)return toast(error.message);toast('Updated');clLoad()}
+async function clNote(id){
+ const c=CL.find(x=>x.c_tenant===id),n=prompt('Note about "'+c.c_shop+'" (only you can see this):',c.c_note||'');if(n===null)return;
+ const {error}=await sb.rpc('admin_set_status',{p_tenant:id,p_status:c.c_status,p_note:n});
+ if(error)return toast(error.message);clLoad()}
  start();
 </script></body></html>
