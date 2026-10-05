@@ -401,5 +401,21 @@ if(typeof IC!=='undefined')IC.tool='<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1
 function adminNav(){if(!NAV.some(g=>g[0]==='Admin tools'))NAV.push(['Admin tools','tool',[['admin','Backup & Restore']]]);if(!$('#app').classList.contains('hidden'))buildNav()}
 if(location.hash==='#admin')adminNav();
 addEventListener('hashchange',()=>{if(location.hash==='#admin')adminNav()});
+/* ===== ADD-ON v7: see who has access + remove access ===== */
+async function loadMembers(){
+ const box=$('#mem');if(!box)return;const own=MY.filter(m=>m.role==='owner');
+ if(!own.length){box.innerHTML='<p class="mu">Only a shop owner can see or remove access.</p>';return}
+ let html='';
+ for(const m of own){
+  const {data,error}=await sb.rpc('list_members',{p_tenant:m.id});
+  if(error){html+=`<p class="mu">${esc(m.name)}: ${esc(error.message)}</p>`;continue}
+  html+=`<div style="margin-bottom:18px"><b>${esc(m.name)}</b><div class="tw"><table><thead><tr><th>Email</th><th>Role</th><th></th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc(r.m_email)}${r.m_pending?' <span class="badge warn">invited</span>':''}</td><td>${esc(r.m_role)}</td><td class="act">${r.m_role==='owner'?'<span class="mu">owner</span>':`<button class="btn sm d" onclick="rmMember('${m.id}',${r.m_user_id?`'${r.m_user_id}'`:'null'},'${esc(r.m_email)}')">Remove access</button>`}</td></tr>`).join('')}</tbody></table></div></div>`}
+ box.innerHTML=html}
+async function rmMember(tid,uid,email){
+ if(!confirm('Remove access for '+email+'? They will no longer be able to open this shop.'))return;
+ const {error}=await sb.rpc('remove_member',{p_tenant:tid,p_user:uid,p_email:email});
+ if(error)return toast(error.message);toast('Access removed');loadMembers()}
+const _shops7=V.shops;
+V.shops=()=>{const r=_shops7();return[r[0],r[1]+'<div class="card"><div class="card-h">Who has access to my shops</div><div class="card-b" id="mem"><p class="mu">Loading...</p></div></div>',()=>{r[2]&&r[2]();loadMembers()}]};
  start();
 </script></body></html>
