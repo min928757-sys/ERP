@@ -478,6 +478,80 @@ async function clNote(id){
  const c=CL.find(x=>x.c_tenant===id),n=prompt('Note about "'+c.c_shop+'" (only you can see this):',c.c_note||'');if(n===null)return;
  const {error}=await sb.rpc('admin_set_status',{p_tenant:id,p_status:c.c_status,p_note:n});
  if(error)return toast(error.message);clLoad()}
+ /* ===== ADD-ON v11: per-staff permissions and locations ===== */
+let RS=null,TEAM=[];
+const PERMS=[['sale','Sale invoices'],['sret','Sale returns'],['purchase','Purchase invoices'],['pret','Purchase returns'],['transfer','Stock transfers'],['master','Add/edit products, customers, suppliers, locations'],['expenses','Expenses'],['edit','Edit/delete saved documents'],['reports','Profit & Loss and Excel export (hidden on screen only)']];
+const NEEDP={sale:'sale','sale-r':'sale',recv:'sale',sret:'sret','sret-r':'sret',purchase:'purchase','purchase-r':'purchase',pay:'purchase',suppliers:'purchase',pret:'pret','pret-r':'pret',transfer:'transfer','transfer-r':'transfer',expenses:'expenses',pl:'reports',export:'reports'};
+const me=()=>MY.find(m=>m.id===T)||{};
+const can=k=>{const m=me();return m.role==='owner'||!m.perms||m.perms.includes(k)};
+const ALW=()=>{const m=me();return(m.role==='owner'||!m.locs)?null:new Set(m.locs)};
+
+loadShops=async function(){
+ const {data:pr}=await sb.from('profiles').select('tenant_id,role,perms,locs'),{data:ts}=await sb.from('tenants').select('id,name,status');
+ MY=(pr||[]).map(p=>{const t=(ts||[]).find(x=>x.id===p.tenant_id)||{};return{id:p.tenant_id,role:p.role,perms:p.perms,locs:p.locs,name:t.name||'Shop',status:t.status||'active'}});
+ return MY.length};
+
+/* other locations' stock comes from the server (quantities only) */
+const _ld11=load;
+load=async function(){
+ const ok=await _ld11();if(!ok)return false;
+ RS=null;const A=ALW();
+ if(A){const {data,error}=await sb.rpc('location_stock',{p_tenant:T});if(error){toast(error.message);return false}
+  RS=data.filter(r=>!A.has(r.r_loc))}
+ return true};
+const _st11=stock;
+stock=function(){const s=_st11(),A=ALW();if(!A||!RS)return s;
+ for(const c in s)for(const l in s[c])if(!A.has(l))delete s[c][l];
+ RS.forEach(r=>{(s[r.r_code]=s[r.r_code]||{})[r.r_loc]=+r.r_qty});return s};
+
+/* menu and page guards (the database is the real guard) */
+const _bn11=buildNav;
+buildNav=function(){const full=NAV.slice();
+ NAV.splice(0,NAV.length,...full.map(([g,ic,it])=>[g,ic,it.filter(([id])=>!NEEDP[id]||can(NEEDP[id]))]).filter(g=>g[2].length));
+ try{_bn11()}finally{NAV.splice(0,NAV.length,...full)}};
+function lockLoc(){const A=ALW();if(!A)return;
+ document.querySelectorAll('select[onchange^="cur.location_id"]').forEach(s=>{
+  [...s.options].forEach(o=>{if(!A.has(o.value))o.remove()});
+  if(s.value&&typeof cur!=='undefined'&&cur)cur.location_id=s.value;
+  if(document.querySelector('#e_code'))pick()})}
+const _go11=go;
+go=function(id,arg){const k=NEEDP[id];if(k&&!can(k)){toast('You do not have access to this page.');return}_go11(id,arg);lockLoc()};
+const _su11=shopUI;
+shopUI=function(){_su11();document.body.classList.toggle('nomaster',!can('master'));document.body.classList.toggle('noedit',!can('edit'))};
+document.head.insertAdjacentHTML('beforeend',`<style>body.nomaster [onclick*="mform"],body.nomaster [onclick*="mdel"],body.noedit [onclick*="ddel"],body.noedit .act [onclick^="go('"][onclick*="','"]{display:none!important}</style>`);
+
+/* owner: staff permissions on the Shops & Team page */
+async function loadTeam(){const box=$('#team');if(!box)return;
+ const {data,error}=await sb.rpc('list_team',{p_tenant:T});
+ if(error){box.innerHTML='<p class="mu" style="padding:18px">'+esc(error.message)+'</p>';return}
+ TEAM=data;const lab=Object.fromEntries(PERMS.map(p=>[p[0],p[1].split(' (')[0]]));
+ box.innerHTML=`<div class="tw"><table><thead><tr><th>Email</th><th>Role</th><th>Locations</th><th>Can do</th><th></th></tr></thead><tbody>${TEAM.map((m,i)=>`<tr><td>${esc(m.t_email)}${m.t_pending?' <span class="badge warn">invited</span>':''}</td><td>${esc(m.t_role)}</td><td>${m.t_locs?esc(m.t_locs.map(ln).join(', ')||'-'):'All'}</td><td style="white-space:normal;max-width:260px">${m.t_role==='owner'||!m.t_perms?'Everything':esc(m.t_perms.map(k=>lab[k]||k).join(', ')||'Nothing')}</td><td class="act">${m.t_role==='owner'?'':`<button class="btn sm" onclick="tmForm(${i})">Edit</button><button class="btn sm d" onclick="tmDel(${i})">Remove</button>`}</td></tr>`).join('')}</tbody></table></div>`}
+function tmForm(i){
+ const m=i>=0?TEAM[i]:{t_email:'',t_role:'cashier',t_perms:['sale','sret','transfer'],t_locs:[]},pp=m.t_perms,ll=m.t_locs,
+  cb=(cls,v,txt,on,off)=>`<label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px;margin:5px 0;color:inherit"><input type="checkbox" class="${cls}" value="${v}" ${on?'checked':''} ${off?'disabled':''}> ${txt}</label>`;
+ $('#modal').innerHTML=`<div class="mbox"><h3>${i>=0?'Edit access':'Add staff'}</h3>
+ <div class="field"><label>Email</label><input class="input" id="tm_e" value="${esc(m.t_email)}" ${i>=0?'readonly':''}></div>
+ <div class="field"><label>Role (viewer = read only)</label><select class="input" id="tm_r">${['manager','cashier','viewer'].map(r=>`<option ${r===m.t_role?'selected':''}>${r}</option>`).join('')}</select></div>
+ <div class="field"><label>Locations they can use</label>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px;color:inherit"><input type="checkbox" id="tm_la" ${ll?'':'checked'} onchange="document.querySelectorAll('.tm_l').forEach(c=>c.disabled=this.checked)"> All locations</label>
+  ${S.locations.map(l=>cb('tm_l',l.id,esc(l.name),ll&&ll.includes(l.id),!ll)).join('')}</div>
+ <div class="field"><label>What they can do</label>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px;color:inherit"><input type="checkbox" id="tm_pa" ${pp?'':'checked'} onchange="document.querySelectorAll('.tm_p').forEach(c=>c.disabled=this.checked)"> Everything</label>
+  ${PERMS.map(([k,t])=>cb('tm_p',k,esc(t),pp&&pp.includes(k),!pp)).join('')}</div>
+ <div class="mact"><button class="btn" onclick="mclose()">Cancel</button><button class="btn primary" onclick="tmSave()">Save</button></div></div>`;
+ $('#modal').classList.add('show')}
+async function tmSave(){
+ const em=$('#tm_e').value.trim().toLowerCase();if(!em)return toast('Enter an email');
+ const all=$('#tm_la').checked,locs=all?null:[...document.querySelectorAll('.tm_l:checked')].map(c=>c.value);
+ if(!all&&!locs.length)return toast('Choose at least one location');
+ const pa=$('#tm_pa').checked,perms=pa?null:[...document.querySelectorAll('.tm_p:checked')].map(c=>c.value);
+ const {error}=await sb.rpc('save_member',{p_tenant:T,p_email:em,p_role:$('#tm_r').value,p_perms:perms,p_locs:locs});
+ if(error)return toast(error.message);mclose();toast('Saved');loadTeam()}
+async function tmDel(i){const m=TEAM[i];if(!confirm('Remove '+m.t_email+' from this shop?'))return;
+ const {error}=await sb.rpc('drop_member',{p_tenant:T,p_email:m.t_email});if(error)return toast(error.message);toast('Removed');loadTeam()}
+const _sh11=V.shops;
+V.shops=()=>{const r=_sh11(),card=me().role==='owner'?`<div class="card"><div class="card-h"><span>Staff permissions (${esc(shop)})</span><button class="btn sm primary" onclick="tmForm(-1)">+ Add staff</button></div><div id="team"><p class="mu" style="padding:18px">Loading...</p></div></div>`:'';
+ return[r[0],r[1]+card,()=>{r[2]&&r[2]();if(card)loadTeam()}]};
  start();
 </script></body></html>
  
