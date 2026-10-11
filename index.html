@@ -552,6 +552,46 @@ async function tmDel(i){const m=TEAM[i];if(!confirm('Remove '+m.t_email+' from t
 const _sh11=V.shops;
 V.shops=()=>{const r=_sh11(),card=me().role==='owner'?`<div class="card"><div class="card-h"><span>Staff permissions (${esc(shop)})</span><button class="btn sm primary" onclick="tmForm(-1)">+ Add staff</button></div><div id="team"><p class="mu" style="padding:18px">Loading...</p></div></div>`:'';
  return[r[0],r[1]+card,()=>{r[2]&&r[2]();if(card)loadTeam()}]};
+ /* ===== ADD-ON v13: invoice numbers per document type and per location (TYPE-LOCATIONCODE-0001) ===== */
+if(typeof dmLoad==='function')dmLoad=async function(){DM={}};   // switches v12 off, if it was added
+
+/* show the next number on a new document form (final number is given when saving) */
+async function peekNo(){
+ if(!cur||cur.id||!cur.location_id)return;
+ const el=document.querySelector('.hg .input[readonly]');if(!el)return;
+ const {data}=await sb.rpc('peek_doc_no',{p_tenant:T,p_type:cur.doc_type,p_loc:cur.location_id});
+ if(data&&!cur.id)el.value=data}
+const _go13=go;
+go=function(id,arg){
+ _go13(id,arg);
+ if(typeof D!=='undefined'&&D[id]&&!arg){
+  peekNo();
+  const s=document.querySelector('select[onchange^="cur.location_id"]');
+  if(s)s.addEventListener('change',()=>peekNo())}};
+
+/* saving: the database gives the number */
+saveDoc=async function(){
+ const type=cur.doc_type,isT=type==='transfer';
+ if(!cur.lines.length)return toast('Add at least one item');
+ if(isT&&cur.location_id===cur.to_location_id)return toast('From and To must be different');
+ const keep=S.docs;S.docs=[...keep.filter(d=>d.id!==cur.id),cur];const bad=neg();S.docs=keep;
+ if(bad)return toast('Not enough stock: '+bad);
+ const row={tenant_id:T,doc_type:type,doc_date:cur.doc_date,partner:isT?null:cur.partner,location_id:cur.location_id,to_location_id:isT?cur.to_location_id:null,note:cur.note};
+ let id=cur.id,r;const isNew=!id;
+ if(id){
+  r=await sb.from('documents').update(row).eq('id',id);if(r.error)return toast(r.error.message);
+  await sb.from('document_lines').delete().eq('document_id',id)}
+ else{
+  row.doc_no='';
+  r=await sb.from('documents').insert(row).select().single();if(r.error)return toast(r.error.message);
+  id=r.data.id;cur.doc_no=r.data.doc_no}
+ r=await sb.from('document_lines').insert(cur.lines.map(l=>({tenant_id:T,document_id:id,product_code:l.code,description:l.desc,qty:l.qty,price:l.price,cost:l.cost||P(l.code).purchase_price||0})));
+ if(r.error){if(isNew)await sb.from('documents').delete().eq('id',id);return toast(r.error.message)}
+ if(isNew&&(type==='sale'||type==='purchase')&&cur.paytype!=='credit'&&dt(cur)>0)
+  await sb.from('payments').insert({tenant_id:T,document_id:id,amount:dt(cur),note:'Paid at invoice'});
+ await load();toast('Saved '+cur.doc_no);
+ if(confirm('Saved. Print now?'))printDoc(cur);
+ go(type+'-r')};
  start();
 </script></body></html>
  
