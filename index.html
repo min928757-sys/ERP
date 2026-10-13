@@ -637,6 +637,117 @@ const stDraw=()=>{const b=$('#stb');if(b)b.innerHTML=stBody()};
 V.stock=()=>{STF={q:'',low:false,hide:false};const L=S.locations,ck='display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px;color:inherit';
  return['Stock Balance',`<details class="card" open><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg"><div class="field"><label>Product code or description</label><input class="input" oninput="STF.q=this.value;stDraw()"></div><div class="field"><label>&nbsp;</label><label style="${ck}"><input type="checkbox" onchange="STF.low=this.checked;stDraw()"> Low stock only</label></div><div class="field"><label>&nbsp;</label><label style="${ck}"><input type="checkbox" onchange="STF.hide=this.checked;stDraw()"> Hide zero stock</label></div></div></details>
  <div class="page-head"><b id="st_sum"></b></div><div class="card"><div class="tw"><table><thead><tr><th>Code</th><th>Description</th>${L.map(l=>`<th class="num">${esc(l.name)}</th>`).join('')}<th class="num">Total</th><th class="num">Value</th></tr></thead><tbody id="stb">${stBody()}</tbody></table></div></div>`,stDraw]};
+ /* ===== ADD-ON v15: part payments (FIFO), statement, return credit ===== */
+const PM=['Cash','Bank transfer','KBZPay','Wave Pay','AYA Pay','Other'];
+const r2=n=>Math.round((+n||0)*100)/100;
+const isRet=p=>p.method==='Return credit';
+const canEd=()=>typeof can==='function'?can('edit'):true;
+const sd=(a,b)=>a.doc_date.localeCompare(b.doc_date)||(a.created_at||'').localeCompare(b.created_at||'')||a.doc_no.localeCompare(b.doc_no);
+let OWN=[],RC=null,CURP=null,PGR=[];
+
+function ptnr(type,name,docs){
+ docs=docs||S.docs;const ret=type==='sale'?'sret':'pret';
+ const inv=docs.filter(d=>d.doc_type===type&&(d.partner||'')===name).sort(sd).map(d=>({d,bal:r2(dt(d)-(d.paid||0))}));
+ const returns=docs.filter(d=>d.doc_type===ret&&(d.partner||'')===name).reduce((a,d)=>a+dt(d),0);
+ const used=inv.reduce((a,x)=>a+(x.d.payments||[]).filter(isRet).reduce((b,p)=>b+ +p.amount,0),0);
+ const open=inv.filter(x=>x.bal>0.005),tot=r2(open.reduce((a,x)=>a+x.bal,0)),credit=Math.max(0,r2(returns-used));
+ return{inv,open,tot,credit,net:r2(tot-credit)}}
+
+/* unpaid list, one row per customer / supplier */
+function owBody(type){
+ const docs=vdocs(),q=($('#ow_q')?.value||'').toLowerCase();
+ const names=[...new Set(docs.filter(d=>d.doc_type===type).map(d=>d.partner||''))];
+ const rows=names.filter(n=>n.toLowerCase().includes(q)).map(n=>({n,...ptnr(type,n,docs)})).filter(x=>x.tot>0.005||x.credit>0.005).sort((a,b)=>b.net-a.net);
+ OWN=rows.map(x=>x.n);
+ const e=$('#ow_sum');if(e)e.textContent=rows.length+(type==='sale'?' customers · they owe ':' suppliers · you owe ')+fmt(rows.reduce((a,x)=>a+x.net,0))+' Ks';
+ return rows.map((x,i)=>{const o=x.open[0],days=o?Math.floor((Date.now()-new Date(o.d.doc_date))/864e5):0;
+  return`<tr><td><b>${esc(x.n||'-')}</b></td><td class="num">${x.open.length}</td><td class="num">${fmt(x.tot)}</td><td class="num">${x.credit?'-'+fmt(x.credit):''}</td><td class="num"><b>${fmt(x.net)}</b></td><td>${o?o.d.doc_date+' <span class="badge '+(days>30?'bad':'ok')+'">'+days+'d</span>':'-'}</td><td class="act"><button class="btn sm" onclick="stmtShow('${type}',OWN[${i}])">Statement</button>${x.tot>0.005?`<button class="btn sm ok" onclick="rcvOpen('${type}',OWN[${i}])">${type==='sale'?'Receive':'Pay'}</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="7" class="empty">Nothing outstanding.</td></tr>'}
+const owDraw=type=>{const b=$('#owb');if(b)b.innerHTML=owBody(type)};
+function owPage(type){const isS=type==='sale';
+ return[isS?'Unpaid Sales (Receivables)':'Unpaid Purchases (Payables)',`<div class="page-head"><b id="ow_sum"></b><input class="input" style="max-width:240px" id="ow_q" placeholder="Search ${isS?'customer':'supplier'}..." oninput="owDraw('${type}')"></div>
+ <div class="card"><div class="tw"><table><thead><tr><th>${isS?'Customer':'Supplier'}</th><th class="num">Unpaid invoices</th><th class="num">Invoice balance</th><th class="num">Return credit</th><th class="num">Net due</th><th>Oldest unpaid</th><th></th></tr></thead><tbody id="owb">${owBody(type)}</tbody></table></div></div>`,()=>owDraw(type)]}
+V.recv=()=>owPage('sale');V.pay=()=>owPage('purchase');
+
+/* statement: every sale / return / payment of one customer, by date, with running balance */
+function stmtLines(type,name){
+ const ret=type==='sale'?'sret':'pret',L=[],G={};PGR=[];
+ S.docs.filter(d=>(d.partner||'')===name).forEach(d=>{
+  if(d.doc_type===type){
+   L.push({date:d.doc_date,o:1,txt:d.doc_no,dr:dt(d),cr:0});
+   (d.payments||[]).forEach(p=>{const k=p.receipt_id||p.id,g=G[k]=G[k]||{cashIds:[],credIds:[],date:p.pay_date,method:'',note:'',cash:0,cred:0};
+    if(isRet(p)){g.credIds.push(p.id);g.cred+=+p.amount}else{g.cashIds.push(p.id);g.cash+=+p.amount;g.method=g.method||p.method||'';g.note=g.note||p.note||''}})}
+  else if(d.doc_type===ret)L.push({date:d.doc_date,o:2,txt:d.doc_no+' (return)',dr:0,cr:dt(d)})});
+ Object.values(G).forEach(g=>{PGR.push(g);L.push({date:g.date,o:3,txt:'Payment'+(g.method?' ('+g.method+')':'')+(g.note?' - '+g.note:'')+(g.cred?' [return credit applied: '+fmt(g.cred)+']':''),dr:0,cr:g.cash,gi:PGR.length-1})});
+ L.sort((a,b)=>a.date.localeCompare(b.date)||a.o-b.o||a.txt.localeCompare(b.txt));
+ let bal=0;L.forEach(r=>{bal=r2(bal+r.dr-r.cr);r.bal=bal});return L}
+function stmtShow(type,name){
+ CURP={type,name};const L=stmtLines(type,name),close=L.length?L[L.length-1].bal:0,isS=type==='sale',ce=canEd();
+ $('#modal').innerHTML=`<div class="mbox" style="max-width:760px"><h3>Statement: ${esc(name||'-')}</h3>
+ <div class="tw"><table><thead><tr><th>Date</th><th>Details</th><th class="num">${isS?'Sold':'Bought'}</th><th class="num">Paid / returned</th><th class="num">Balance</th><th></th></tr></thead><tbody>${L.map(r=>`<tr><td>${r.date}</td><td style="white-space:normal">${esc(r.txt)}</td><td class="num">${r.dr?fmt(r.dr):''}</td><td class="num">${r.cr?fmt(r.cr):''}</td><td class="num">${fmt(r.bal)}</td><td class="act">${ce&&r.gi!==undefined?`<button class="btn sm" onclick="payEdit(${r.gi})">Edit</button><button class="btn sm d" onclick="payDel(${r.gi})">Delete</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">No records.</td></tr>'}</tbody></table></div>
+ <div class="tot" style="padding:12px 0"><span>${isS?'Customer owes':'You owe'}</span><span>${fmt(close)}</span> Ks</div>
+ <div class="mact"><button class="btn" onclick="prtStmt()">🖨 Print</button>${close>0.005?`<button class="btn ok" onclick="rcvOpen('${type}',CURP.name)">${isS?'Receive payment':'Make payment'}</button>`:''}<button class="btn" onclick="stClose()">Close</button></div></div>`;
+ $('#modal').classList.add('show')}
+function stClose(){mclose();const id=document.querySelector('.si.on')?.dataset.id;if(id)go(id)}
+function prtStmt(){const {type,name}=CURP,L=stmtLines(type,name),close=L.length?L[L.length-1].bal:0;
+ $('#print').innerHTML=`<h2>${esc(shop)}</h2><h3>Statement of account</h3><p>${type==='sale'?'Customer':'Supplier'}: <b>${esc(name||'-')}</b> &nbsp; Date: ${today()}</p><table><thead><tr><th>Date</th><th>Details</th><th>${type==='sale'?'Sold':'Bought'}</th><th>Paid / returned</th><th>Balance</th></tr></thead><tbody>${L.map(r=>`<tr><td>${r.date}</td><td>${esc(r.txt)}</td><td>${r.dr?fmt(r.dr):''}</td><td>${r.cr?fmt(r.cr):''}</td><td>${fmt(r.bal)}</td></tr>`).join('')}</tbody></table><h3 style="text-align:right">Balance: ${fmt(close)} Ks</h3>`;window.print()}
+
+/* edit / delete a payment (database allows it only for the owner or "Edit/delete" permission) */
+function payEdit(i){const g=PGR[i];if(!g)return;const ms=['',...new Set([g.method,...PM].filter(Boolean))];
+ $('#modal').innerHTML=`<div class="mbox"><h3>Edit payment</h3><p class="mu" style="margin-bottom:12px">Amount ${fmt(g.cash)} Ks. To change the amount, delete this payment and enter it again.</p>
+ <div class="field"><label>Date</label><input class="input" id="pe_d" type="date" value="${g.date}"></div>
+ <div class="field"><label>Method</label><select class="input" id="pe_m">${ms.map(m=>`<option value="${esc(m)}" ${m===g.method?'selected':''}>${m||'-'}</option>`).join('')}</select></div>
+ <div class="field"><label>Note</label><input class="input" id="pe_n" value="${esc(g.note)}"></div>
+ <div class="mact"><button class="btn" onclick="stmtShow(CURP.type,CURP.name)">Back</button><button class="btn primary" onclick="payUpd(${i})">Save</button></div></div>`}
+async function payUpd(i){const g=PGR[i],d=$('#pe_d').value;if(!g||!d)return toast('Choose a date');
+ let n=0;
+ if(g.cashIds.length){const r=await sb.from('payments').update({pay_date:d,method:$('#pe_m').value||null,note:$('#pe_n').value.trim()||null}).in('id',g.cashIds).select('id');if(r.error)return toast(r.error.message);n+=r.data.length}
+ if(g.credIds.length){const r=await sb.from('payments').update({pay_date:d}).in('id',g.credIds).select('id');if(r.error)return toast(r.error.message);n+=r.data.length}
+ if(n<g.cashIds.length+g.credIds.length)return toast('Not allowed: only the owner or someone with Edit/delete permission can change payments');
+ await load();toast('Saved');stmtShow(CURP.type,CURP.name)}
+async function payDel(i){const g=PGR[i];if(!g||!confirm('Delete this payment ('+fmt(g.cash)+' Ks)? The invoices will show as unpaid again.'))return;
+ const ids=g.cashIds.concat(g.credIds),r=await sb.from('payments').delete().in('id',ids).select('id');
+ if(r.error)return toast(r.error.message);
+ if(r.data.length<ids.length)return toast('Not allowed: only the owner or someone with Edit/delete permission can delete payments');
+ await load();toast('Deleted');stmtShow(CURP.type,CURP.name)}
+
+/* receive / make a payment: one amount, split over the oldest invoices first */
+function rcvOpen(type,name){
+ const x=ptnr(type,name);if(x.tot<=0.005)return toast('Nothing outstanding');
+ RC={type,name};const isS=type==='sale';
+ $('#modal').innerHTML=`<div class="mbox"><h3>${isS?'Receive payment':'Make payment'}: ${esc(name||'-')}</h3>
+ <div class="row"><span>Unpaid invoices</span><b>${fmt(x.tot)} Ks</b></div>
+ ${x.credit?`<div class="row"><span>Return credit available</span><b>${fmt(x.credit)} Ks</b></div>`:''}
+ <div class="field" style="margin-top:12px"><label>Date</label><input class="input" id="rc_d" type="date" value="${today()}"></div>
+ <div class="field"><label>Amount ${isS?'received':'paid'}</label><input class="input" id="rc_a" type="number" min="0" value="${Math.max(0,r2(x.tot-x.credit))}" oninput="rcvPrev()"></div>
+ <div class="field"><label>Method</label><select class="input" id="rc_m">${PM.map(m=>`<option>${m}</option>`).join('')}</select></div>
+ <div class="field"><label>Note</label><input class="input" id="rc_n"></div>
+ ${x.credit?'<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="rc_c" checked onchange="rcvPrev()"> Use return credit first</label>':''}
+ <div id="rc_p" class="mu" style="margin:10px 0"></div>
+ <div class="mact"><button class="btn" onclick="mclose()">Cancel</button><button class="btn ok" onclick="rcvSave()">Save</button></div></div>`;
+ $('#modal').classList.add('show');rcvPrev()}
+function rcvPlan(){
+ const x=ptnr(RC.type,RC.name),cash=r2($('#rc_a').value),useC=$('#rc_c')&&$('#rc_c').checked;
+ if(cash<0)return{error:'Enter an amount'};
+ if(cash>x.tot+0.005)return{error:'More than the unpaid amount ('+fmt(x.tot)+' Ks)'};
+ const credit=useC?Math.min(x.credit,r2(x.tot-cash)):0;
+ if(cash+credit<=0)return{error:'Enter an amount'};
+ let m=cash,c=credit;const rows=[];
+ for(const o of x.open){let need=o.bal;
+  const fc=Math.min(c,need);if(fc>0.004){rows.push({d:o.d,amount:r2(fc),credit:true});c=r2(c-fc);need=r2(need-fc)}
+  const fm=Math.min(m,need);if(fm>0.004){rows.push({d:o.d,amount:r2(fm),credit:false});m=r2(m-fm)}
+  if(c<=0.004&&m<=0.004)break}
+ return{rows,cash,credit,x}}
+function rcvPrev(){const p=rcvPlan(),el=$('#rc_p');if(!el)return;
+ if(p.error){el.textContent=p.error;return}
+ const left=r2(p.x.tot-p.cash-p.credit);
+ el.innerHTML='Applied to the oldest invoices first:<br>'+p.rows.map(r=>esc(r.d.doc_no)+': '+fmt(r.amount)+(r.credit?' (return credit)':'')).join('<br>')+(left>0.005?'<br><b>Still unpaid after this: '+fmt(left)+' Ks</b>':'<br><b>Fully settled</b>')}
+async function rcvSave(){
+ const p=rcvPlan();if(p.error)return toast(p.error);
+ const rid=crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)});
+ const date=$('#rc_d').value||today(),method=$('#rc_m').value,note=$('#rc_n').value.trim()||null;
+ const rows=p.rows.map(r=>({tenant_id:T,document_id:r.d.id,pay_date:date,amount:r.amount,method:r.credit?'Return credit':method,note:r.credit?'Applied from return credit':note,receipt_id:rid}));
+ const {error}=await sb.from('payments').insert(rows);if(error)return toast(error.message);
+ const nm=RC.name,tp=RC.type;await load();toast('Saved');stmtShow(tp,nm)}
  start();
 </script></body></html>
  
