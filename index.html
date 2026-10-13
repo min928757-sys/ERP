@@ -592,6 +592,51 @@ saveDoc=async function(){
  await load();toast('Saved '+cur.doc_no);
  if(confirm('Saved. Print now?'))printDoc(cur);
  go(type+'-r')};
+ /* ===== ADD-ON v14: filters on Records and Stock Balance ===== */
+const vdocs=()=>typeof fdocs3==='function'?fdocs3():S.docs;
+let RF={q:'',p:'',f:'',t:'',st:''};
+const pst=d=>{const t=dt(d),p=d.paid||0;return t-p<=0.0001?'Paid':p>0?'Partial':'Unpaid'};
+const pBadge=s=>`<span class="badge ${s==='Paid'?'ok':s==='Partial'?'warn':'bad'}">${s}</span>`;
+function rfApply(){const b=$('#tb');if(b&&window.mb)b.innerHTML=window.mb()}
+
+rec=function(type){
+ RF={q:'',p:'',f:'',t:'',st:''};
+ const c=D[type],isT=type==='transfer',isP=type==='sale'||type==='purchase';
+ const body=()=>{
+  const q=RF.q.toLowerCase(),p=RF.p.toLowerCase();
+  const rows=vdocs().filter(d=>d.doc_type===type)
+   .filter(d=>!q||((d.doc_no||'')+' '+(d.partner||'')+' '+d.doc_date+' '+(d.note||'')).toLowerCase().includes(q))
+   .filter(d=>(!RF.f||d.doc_date>=RF.f)&&(!RF.t||d.doc_date<=RF.t)&&(!RF.st||pst(d)===RF.st))
+   .map(d=>({d,hit:p?d.lines.filter(l=>((l.code||'')+' '+(l.desc||'')).toLowerCase().includes(p)):[]}))
+   .filter(x=>!p||x.hit.length)
+   .sort((a,b)=>b.d.doc_date.localeCompare(a.d.doc_date)||b.d.doc_no.localeCompare(a.d.doc_no));
+  const e=$('#rsum');
+  if(e){const q1=rows.reduce((a,x)=>a+x.hit.reduce((b,l)=>b+l.qty,0),0),a1=rows.reduce((a,x)=>a+x.hit.reduce((b,l)=>b+l.qty*l.price,0),0);
+   e.textContent=rows.length+' records'+(isT?'':' · '+fmt(rows.reduce((a,x)=>a+dt(x.d),0))+' Ks')+(p?' · matching qty '+fmt(q1)+(isT?'':' · '+fmt(a1)+' Ks'):'')}
+  return rows.map(({d,hit})=>`<tr><td><b>${d.doc_no}</b></td><td>${d.doc_date}</td><td>${isT?esc(ln(d.location_id))+' → '+esc(ln(d.to_location_id)):esc(d.partner)}</td>${isT?'':`<td>${esc(ln(d.location_id))}</td>`}<td class="${p?'':'num'}" style="${p?'white-space:normal;min-width:150px':''}">${p?hit.map(l=>esc(l.code)+' × '+fmt(l.qty)).join(', '):d.lines.length}</td>${isT?'':`<td class="num">${fmt(dt(d))}</td>`}${isP?`<td>${pBadge(pst(d))}</td>`:''}<td class="act"><button class="btn sm" onclick="printDoc(S.docs.find(x=>x.id==='${d.id}'))">Print</button>${isP?`<button class="btn sm" onclick="showPays('${d.id}')">Payments</button>`:''}<button class="btn sm" onclick="go('${type}','${d.id}')">Edit</button><button class="btn sm d" onclick="ddel('${type}','${d.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">No records found.</td></tr>'};
+ const fld=(l,k,ty,ph)=>`<div class="field"><label>${l}</label><input class="input" type="${ty}" placeholder="${ph}" oninput="RF.${k}=this.value;rfApply()" onchange="RF.${k}=this.value;rfApply()"></div>`;
+ return[c.t+' Records',`<div class="page-head"><b id="rsum"></b><button class="btn primary" onclick="go('${type}')">+ New</button></div>
+ <details class="card"><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg">${fld('Search','q','text','No, name, date...')}${fld('Product code or description','p','text','e.g. P-001')}${fld('From','f','date','')}${fld('To','t','date','')}${isP?'<div class="field"><label>Status</label><select class="input" onchange="RF.st=this.value;rfApply()"><option value="">All</option><option>Paid</option><option>Partial</option><option>Unpaid</option></select></div>':''}<div class="field"><label>&nbsp;</label><button class="btn" onclick="go(\''+type+'-r\')">Clear</button></div></div></details>
+ <div class="card"><div class="tw"><table><thead><tr><th>No.</th><th>Date</th><th>${isT?'From → To':c.pl}</th>${isT?'':'<th>Location</th>'}<th>Items</th>${isT?'':'<th class="num">Total</th>'}${isP?'<th>Status</th>':''}<th></th></tr></thead><tbody id="tb">${body()}</tbody></table></div></div>`,()=>{window.mb=body;rfApply()}]};
+
+function showPays(id){const d=S.docs.find(x=>x.id===id);if(!d)return;
+ const ps=(d.payments||[]).slice().sort((a,b)=>(a.pay_date||'').localeCompare(b.pay_date||'')),t=dt(d),p=d.paid||0;
+ $('#modal').innerHTML=`<div class="mbox"><h3>${esc(d.doc_no)}: payments</h3><p class="mu" style="margin-bottom:10px">${esc(d.partner||'')}</p>
+ <div class="row"><span>Total</span><b>${fmt(t)} Ks</b></div><div class="row"><span>Paid</span><b>${fmt(p)} Ks</b></div><div class="row"><span>Balance</span><b>${fmt(t-p)} Ks</b></div>
+ <div class="tw" style="margin-top:12px"><table><thead><tr><th>Date</th><th class="num">Amount</th><th>Method</th><th>Note</th></tr></thead><tbody>${ps.map(x=>`<tr><td>${x.pay_date||''}</td><td class="num">${fmt(x.amount)}</td><td>${esc(x.method||'')}</td><td style="white-space:normal">${esc(x.note||'')}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No payments yet.</td></tr>'}</tbody></table></div>
+ <div class="mact" style="margin-top:12px"><button class="btn" onclick="mclose()">Close</button></div></div>`;
+ $('#modal').classList.add('show')}
+
+/* Stock Balance filter */
+let STF={q:'',low:false,hide:false};
+function stBody(){const s=stock(),L=S.locations,q=STF.q.toLowerCase(),tot=c=>Object.values(s[c]||{}).reduce((a,b)=>a+b,0);
+ const rows=S.products.filter(p=>!q||((p.code||'')+' '+(p.description||'')).toLowerCase().includes(q)).map(p=>({p,t:tot(p.code)})).filter(x=>(!STF.low||x.t<=x.p.min_stock)&&(!STF.hide||x.t!==0));
+ const e=$('#st_sum');if(e)e.textContent=rows.length+' products · stock value '+fmt(rows.reduce((a,x)=>a+x.t*x.p.purchase_price,0))+' Ks';
+ return rows.map(({p,t})=>`<tr class="${t<=p.min_stock?'low':''}"><td>${esc(p.code)}</td><td>${esc(p.description)}</td>${L.map(l=>`<td class="num">${fmt((s[p.code]||{})[l.id])}</td>`).join('')}<td class="num"><b>${fmt(t)}</b></td><td class="num">${fmt(t*p.purchase_price)}</td></tr>`).join('')||`<tr><td colspan="${L.length+4}" class="empty">No products found.</td></tr>`}
+const stDraw=()=>{const b=$('#stb');if(b)b.innerHTML=stBody()};
+V.stock=()=>{STF={q:'',low:false,hide:false};const L=S.locations,ck='display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px;color:inherit';
+ return['Stock Balance',`<details class="card" open><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg"><div class="field"><label>Product code or description</label><input class="input" oninput="STF.q=this.value;stDraw()"></div><div class="field"><label>&nbsp;</label><label style="${ck}"><input type="checkbox" onchange="STF.low=this.checked;stDraw()"> Low stock only</label></div><div class="field"><label>&nbsp;</label><label style="${ck}"><input type="checkbox" onchange="STF.hide=this.checked;stDraw()"> Hide zero stock</label></div></div></details>
+ <div class="page-head"><b id="st_sum"></b></div><div class="card"><div class="tw"><table><thead><tr><th>Code</th><th>Description</th>${L.map(l=>`<th class="num">${esc(l.name)}</th>`).join('')}<th class="num">Total</th><th class="num">Value</th></tr></thead><tbody id="stb">${stBody()}</tbody></table></div></div>`,stDraw]};
  start();
 </script></body></html>
  
