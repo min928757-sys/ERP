@@ -851,6 +851,111 @@ async function xcDel(id){
  if(!confirm('Delete this category? Old expenses keep their category name.'))return;
  const {error}=await sb.from('expense_categories').delete().eq('id',id);if(error)return toast(error.message);
  await load();xcMgr()}
+ /* ===== ADD-ON v17: Stock In / Stock Out with reason ===== */
+D.sin={t:'Stock In',pre:'AI',s:1};
+D.sout={t:'Stock Out',pre:'AO',s:-1};
+const ADJR={sin:['Opening stock','Found / returned','Count correction','Other'],sout:['Damaged','Expired','Lost / missing','Own use','Count correction','Other']};
+let ADJ=null,AF={f:'',t:'',k:'',r:'',p:''};
+const canAdj=()=>{const m=me();return m.role==='owner'||(m.role==='manager'&&can('adjust'))};
+const adjRoleOk=()=>{const m=me();return ['owner','manager','viewer'].includes(m.role)||(typeof SUP!=='undefined'&&SUP===true)};
+if(typeof PERMS!=='undefined'&&!PERMS.some(p=>p[0]==='adjust'))PERMS.push(['adjust','Stock In / Out (managers only)']);
+NEEDP.adj='adjust';NEEDP['adj-r']='adjust';
+(function(){const inv=NAV.find(g=>g[0]==='Inventory');
+ if(inv&&!inv[2].some(i=>i[0]==='adj')){const k=inv[2].findIndex(i=>i[0]==='transfer-r');inv[2].splice(k+1,0,['adj','Stock In / Out'],['adj-r','Adjustment Records'])}})();
+document.head.insertAdjacentHTML('beforeend','<style>body.viewer [onclick*="adjSave"],body.viewer [onclick*="adjDel"],body.noedit [onclick*="adjDel"]{display:none!important}</style>');
+
+const _bn17=buildNav;
+buildNav=function(){
+ const inv=NAV.find(g=>g[0]==='Inventory'),keep=inv&&inv[2];
+ if(inv)inv[2]=keep.filter(i=>(i[0]!=='adj'||canAdj())&&(i[0]!=='adj-r'||adjRoleOk()));
+ try{_bn17()}finally{if(inv)inv[2]=keep}};
+const _go17=go;
+go=function(id,arg){
+ if(id==='adj'&&!canAdj()){toast('Only the owner or a manager can use Stock In / Out.');return}
+ if(id==='adj-r'&&!adjRoleOk()){toast('You do not have access to this page.');return}
+ _go17(id,arg)};
+
+const eyeAdj=id=>`<button class="btn sm" title="View" aria-label="View" onclick="adjView('${id}')">${typeof svg==='function'?svg('eye'):'View'}</button>`;
+
+/* ---- new Stock In / Stock Out ---- */
+V.adj=()=>{
+ const A=typeof ALW==='function'?ALW():null,locs=S.locations.filter(l=>!A||A.has(l.id));
+ ADJ={kind:'sin',date:today(),loc:(locs[0]||{}).id||'',reason:ADJR.sin[0],note:'',lines:[]};
+ return['Stock In / Stock Out',`<div class="card"><div class="card-b hg">
+  <div class="field"><label>Type</label><select class="input" onchange="adjKind(this.value)"><option value="sin">Stock In (add stock)</option><option value="sout">Stock Out (remove stock)</option></select></div>
+  <div class="field"><label>Date</label><input class="input" type="date" value="${ADJ.date}" onchange="ADJ.date=this.value"></div>
+  <div class="field"><label>Location</label><select class="input" onchange="ADJ.loc=this.value;adjPick()">${locs.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('')}</select></div>
+  <div class="field"><label>Reason</label><select class="input" id="ad_r" onchange="ADJ.reason=this.value">${ADJR.sin.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>
+  <div class="field"><label>Note</label><input class="input" oninput="ADJ.note=this.value"></div></div></div>
+ <div class="card"><div class="card-b entry" style="grid-template-columns:1.2fr 2fr .7fr auto"><datalist id="ad_pl">${S.products.map(p=>`<option value="${esc(p.code)}">${esc(p.description)}</option>`).join('')}</datalist>
+  <div class="field"><label>Product Code</label><input class="input" id="ad_c" list="ad_pl" oninput="adjPick()"></div>
+  <div class="field"><label>Description <small id="ad_av" style="color:var(--ok)"></small></label><input class="input" id="ad_ds" readonly></div>
+  <div class="field"><label>Qty</label><input class="input" id="ad_q" type="number" min="1" value="1" onkeydown="event.key==='Enter'&&adjAdd()"></div>
+  <button class="btn primary" onclick="adjAdd()">+ Add</button></div></div>
+ <div class="card"><div class="tw" id="ad_lines"></div><div class="tot"><span>Total qty</span><span id="ad_tot">0</span></div></div>
+ <div style="display:flex;justify-content:flex-end"><button class="btn ok" onclick="adjSave()">💾 Save</button></div>`,drawAdj]};
+function adjKind(k){ADJ.kind=k;ADJ.reason=ADJR[k][0];$('#ad_r').innerHTML=ADJR[k].map(r=>`<option>${esc(r)}</option>`).join('')}
+function adjPick(){const p=P($('#ad_c').value.trim());$('#ad_ds').value=p.description||'';
+ $('#ad_av').textContent=p.code?'(stock here: '+fmt((stock()[p.code]||{})[ADJ.loc]||0)+')':''}
+function adjAdd(){const code=$('#ad_c').value.trim(),p=P(code),q=+$('#ad_q').value;
+ if(!p.code)return toast('Select a valid product code');if(!(q>0))return toast('Enter a quantity');
+ const ex=ADJ.lines.find(l=>l.code===code);ex?ex.qty+=q:ADJ.lines.push({code,desc:p.description,qty:q,cost:+p.purchase_price||0});
+ $('#ad_c').value='';$('#ad_q').value=1;adjPick();drawAdj();$('#ad_c').focus()}
+function drawAdj(){const el=$('#ad_lines');if(!el||!ADJ)return;
+ el.innerHTML=`<table><thead><tr><th>#</th><th>Code</th><th>Description</th><th class="num">Qty</th><th></th></tr></thead><tbody>${ADJ.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td style="white-space:normal">${esc(l.desc)}</td><td class="num">${fmt(l.qty)}</td><td class="act"><button class="btn sm d" onclick="ADJ.lines.splice(${i},1);drawAdj()">Delete</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">No items yet.</td></tr>'}</tbody></table>`;
+ $('#ad_tot').textContent=fmt(ADJ.lines.reduce((a,l)=>a+l.qty,0))}
+async function adjSave(){
+ if(!canAdj())return toast('Only the owner or a manager can do this.');
+ if(!ADJ.loc)return toast('Choose a location');if(!ADJ.lines.length)return toast('Add at least one item');
+ const tmp={doc_type:ADJ.kind,location_id:ADJ.loc,doc_no:'',doc_date:ADJ.date,lines:ADJ.lines.map(l=>({code:l.code,qty:l.qty,price:0}))};
+ const keep=S.docs;S.docs=[...keep,tmp];const bad=neg();S.docs=keep;if(bad)return toast('Not enough stock: '+bad);
+ const row={tenant_id:T,doc_type:ADJ.kind,doc_no:'',doc_date:ADJ.date,partner:null,location_id:ADJ.loc,to_location_id:null,note:ADJ.note||null,reason:ADJ.reason};
+ const r=await sb.from('documents').insert(row).select().single();if(r.error)return toast(r.error.message);
+ const l=await sb.from('document_lines').insert(ADJ.lines.map(x=>({tenant_id:T,document_id:r.data.id,product_code:x.code,description:x.desc,qty:x.qty,price:0,cost:x.cost})));
+ if(l.error){await sb.from('documents').delete().eq('id',r.data.id);return toast(l.error.message)}
+ await load();toast('Saved '+r.data.doc_no);go('adj-r')}
+
+/* ---- records ---- */
+const adjDocs=()=>vdocs().filter(d=>d.doc_type==='sin'||d.doc_type==='sout');
+function adjDraw(){const p=AF.p.toLowerCase(),val=d=>d.lines.reduce((a,l)=>a+l.qty*(l.cost||0),0);
+ const rows=adjDocs().filter(d=>(!AF.f||d.doc_date>=AF.f)&&(!AF.t||d.doc_date<=AF.t)&&(!AF.k||d.doc_type===AF.k)&&(!AF.r||d.reason===AF.r)&&(!p||d.lines.some(l=>((l.code||'')+' '+(l.desc||'')).toLowerCase().includes(p))))
+  .sort((a,b)=>b.doc_date.localeCompare(a.doc_date)||b.doc_no.localeCompare(a.doc_no));
+ $('#adj_sum').textContent=rows.length+' records';
+ $('#adj_b').innerHTML=rows.map(d=>`<tr><td><b>${esc(d.doc_no)}</b></td><td>${d.doc_date}</td><td>${d.doc_type==='sin'?'<span class="badge ok">Stock In</span>':'<span class="badge bad">Stock Out</span>'}</td><td>${esc(ln(d.location_id))}</td><td>${esc(d.reason||'')}</td><td class="num">${d.lines.length}</td><td class="num">${fmt(d.lines.reduce((a,l)=>a+l.qty,0))}</td><td class="num">${fmt(val(d))}</td><td class="act">${eyeAdj(d.id)}<button class="btn sm d" onclick="adjDel('${d.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">No records.</td></tr>'}
+V['adj-r']=()=>{AF={f:'',t:'',k:'',r:'',p:''};const rs=[...new Set([...ADJR.sin,...ADJR.sout])];
+ return['Stock Adjustment Records',`<div class="page-head"><b id="adj_sum"></b>${canAdj()?`<button class="btn primary" onclick="go('adj')">+ New</button>`:''}</div>
+ <details class="card"><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg">
+  <div class="field"><label>From</label><input class="input" type="date" onchange="AF.f=this.value;adjDraw()"></div>
+  <div class="field"><label>To</label><input class="input" type="date" onchange="AF.t=this.value;adjDraw()"></div>
+  <div class="field"><label>Type</label><select class="input" onchange="AF.k=this.value;adjDraw()"><option value="">All</option><option value="sin">Stock In</option><option value="sout">Stock Out</option></select></div>
+  <div class="field"><label>Reason</label><select class="input" onchange="AF.r=this.value;adjDraw()"><option value="">All</option>${rs.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div>
+  <div class="field"><label>Product code or description</label><input class="input" oninput="AF.p=this.value;adjDraw()"></div></div></details>
+ <div class="card"><div class="tw"><table><thead><tr><th>No.</th><th>Date</th><th>Type</th><th>Location</th><th>Reason</th><th class="num">Items</th><th class="num">Qty</th><th class="num">Cost value</th><th></th></tr></thead><tbody id="adj_b"></tbody></table></div></div>`,adjDraw]};
+function adjView(id){const d=S.docs.find(x=>x.id===id);if(!d)return;
+ const v=d.lines.reduce((a,l)=>a+l.qty*(l.cost||0),0);
+ $('#modal').innerHTML=`<div class="mbox" style="max-width:620px"><h3>${D[d.doc_type].t} ${esc(d.doc_no)}</h3>
+ <div class="row"><span>Date</span><b>${d.doc_date}</b></div><div class="row"><span>Location</span><b>${esc(ln(d.location_id))}</b></div><div class="row"><span>Reason</span><b>${esc(d.reason||'-')}</b></div>${d.note?`<div class="row"><span>Note</span><b>${esc(d.note)}</b></div>`:''}
+ <div class="tw" style="margin-top:12px"><table><thead><tr><th>Code</th><th>Description</th><th class="num">Qty</th><th class="num">Cost</th><th class="num">Value</th></tr></thead><tbody>${d.lines.map(l=>`<tr><td>${esc(l.code)}</td><td style="white-space:normal">${esc(l.desc)}</td><td class="num">${fmt(l.qty)}</td><td class="num">${fmt(l.cost||0)}</td><td class="num">${fmt(l.qty*(l.cost||0))}</td></tr>`).join('')}</tbody></table></div>
+ <div class="tot" style="padding:12px 0"><span>Cost value</span><span>${fmt(v)}</span> Ks</div>
+ <div class="mact"><button class="btn" onclick="prtAdj('${id}')">Print</button><button class="btn primary" onclick="mclose()">Close</button></div></div>`;
+ $('#modal').classList.add('show')}
+function prtAdj(id){const d=S.docs.find(x=>x.id===id);if(!d)return;
+ $('#print').innerHTML=`<h2>${esc(shop)}</h2><h3>${D[d.doc_type].t}</h3><p>No: ${esc(d.doc_no)} &nbsp; Date: ${d.doc_date}</p><p>Location: ${esc(ln(d.location_id))} &nbsp; Reason: ${esc(d.reason||'-')}</p>
+ <table><thead><tr><th>#</th><th>Code</th><th>Description</th><th>Qty</th></tr></thead><tbody>${d.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td>${esc(l.desc)}</td><td>${fmt(l.qty)}</td></tr>`).join('')}</tbody></table><p>${esc(d.note||'')}</p><div class="sign"><span>Prepared by</span><span>Approved by</span></div>`;window.print()}
+async function adjDel(id){
+ if(!confirm('Delete this record? Stock will change back.'))return;
+ const keep=S.docs;S.docs=keep.filter(d=>d.id!==id);const bad=neg();S.docs=keep;
+ if(bad)return toast('Cannot delete, stock would go negative: '+bad);
+ const {error,data}=await sb.from('documents').delete().eq('id',id).select('id');
+ if(error)return toast(error.message);
+ if(!data||!data.length)return toast('Not allowed: only the owner or a manager with Edit/delete permission can delete this');
+ await load();toast('Deleted');go('adj-r')}
+
+/* Excel sheet */
+if(typeof REP!=='undefined'&&typeof SH!=='undefined'&&!REP.some(r=>r[0]==='Stock Adjustments')){
+ REP.push(['Stock Adjustments','Stock In / Stock Out with reason and cost']);
+ SH['Stock Adjustments']=()=>[['Doc No','Date','Type','Location','Reason','Note','Code','Description','Qty','Cost per unit','Cost value'],
+  ...[...xD('sin'),...xD('sout')].sort((a,b)=>a.doc_date.localeCompare(b.doc_date)||a.doc_no.localeCompare(b.doc_no)).flatMap(d=>d.lines.map(l=>[d.doc_no,d.doc_date,D[d.doc_type].t,ln(d.location_id),d.reason||'',d.note||'',l.code,l.desc,l.qty,l.cost||0,l.qty*(l.cost||0)]))]}
  start();
 </script></body></html>
  
