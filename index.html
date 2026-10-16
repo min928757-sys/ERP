@@ -748,6 +748,109 @@ async function rcvSave(){
  const rows=p.rows.map(r=>({tenant_id:T,document_id:r.d.id,pay_date:date,amount:r.amount,method:r.credit?'Return credit':method,note:r.credit?'Applied from return credit':note,receipt_id:rid}));
  const {error}=await sb.from('payments').insert(rows);if(error)return toast(error.message);
  const nm=RC.name,tp=RC.type;await load();toast('Saved');stmtShow(tp,nm)}
+ /* ===== ADD-ON v16: eye (View) button on Records + expense categories ===== */
+if(typeof IC!=='undefined')IC.eye='<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
+document.head.insertAdjacentHTML('beforeend','<style>body.viewer [onclick*="xpForm"],body.viewer [onclick*="xpDel"],body.viewer [onclick*="xcMgr"]{display:none!important}</style>');
+
+/* ---- View button: read-only view of an invoice ---- */
+const eye16=id=>`<button class="btn sm" title="View" aria-label="View" onclick="viewDoc('${id}')">${typeof svg==='function'?svg('eye'):'View'}</button>`;
+const _rec16=rec;
+rec=function(type){
+ const r=_rec16(type);
+ const fix=h=>h
+  .replace(/<button class="btn sm" onclick="printDoc\(S\.docs\.find\(x=>x\.id==='[^']+'\)\)">Print<\/button>/g,'')
+  .replace(/<button class="btn sm" onclick="showPays\('[^']+'\)">Payments<\/button>/g,'')
+  .replace(/<button class="btn sm" onclick="go\('[a-z]+','([^']+)'\)">Edit<\/button>/g,(m,id)=>eye16(id)+m);
+ r[1]=fix(r[1]);
+ const fn=r[2];
+ r[2]=()=>{fn&&fn();const b=window.mb;if(b){window.mb=()=>fix(b());const t=$('#tb');if(t)t.innerHTML=window.mb()}};
+ return r};
+function viewDoc(id){
+ const d=S.docs.find(x=>x.id===id);if(!d)return;
+ const c=D[d.doc_type],isT=d.doc_type==='transfer',isP=d.doc_type==='sale'||d.doc_type==='purchase',t=dt(d),p=d.paid||0,
+  ce=(typeof can==='function'?can('edit'):true)&&!document.body.classList.contains('viewer'),
+  ps=(d.payments||[]).slice().sort((a,b)=>(a.pay_date||'').localeCompare(b.pay_date||'')),
+  st=isP?(t-p<=0.0001?'<span class="badge ok">Paid</span>':p>0?'<span class="badge warn">Partial</span>':'<span class="badge bad">Unpaid</span>'):'';
+ const lines=d.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td style="white-space:normal">${esc(l.desc)}</td><td class="num">${fmt(l.qty)}</td>${isT?'':`<td class="num">${fmt(l.price)}</td><td class="num">${fmt(l.qty*l.price)}</td>`}</tr>`).join('');
+ const pays=isP?`<div class="row" style="margin-top:10px"><span>Paid</span><b>${fmt(p)} Ks</b></div><div class="row"><span>Balance</span><b>${fmt(t-p)} Ks</b></div>${ps.length?`<div class="tw"><table><thead><tr><th>Payment date</th><th class="num">Amount</th><th>Method</th><th>Note</th></tr></thead><tbody>${ps.map(x=>`<tr><td>${x.pay_date||''}</td><td class="num">${fmt(x.amount)}</td><td>${esc(x.method||'')}</td><td style="white-space:normal">${esc(x.note||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="mu" style="margin-top:8px">No payments yet.</p>'}`:'';
+ $('#modal').innerHTML=`<div class="mbox" style="max-width:640px"><h3>${esc(c.t)} ${esc(d.doc_no)} ${st}</h3>
+ <div class="row"><span>Date</span><b>${d.doc_date}</b></div>
+ <div class="row"><span>${isT?'From → To':c.pl}</span><b>${isT?esc(ln(d.location_id))+' → '+esc(ln(d.to_location_id)):esc(d.partner||'-')}</b></div>
+ ${isT?'':`<div class="row"><span>Location</span><b>${esc(ln(d.location_id))}</b></div>`}
+ ${d.note?`<div class="row"><span>Note</span><b>${esc(d.note)}</b></div>`:''}
+ <div class="tw" style="margin-top:12px"><table><thead><tr><th>#</th><th>Code</th><th>Description</th><th class="num">Qty</th>${isT?'':'<th class="num">Price</th><th class="num">Amount</th>'}</tr></thead><tbody>${lines}</tbody></table></div>
+ ${isT?'':`<div class="tot" style="padding:12px 0"><span>Total</span><span>${fmt(t)}</span> Ks</div>`}
+ ${pays}
+ <div class="mact" style="margin-top:12px"><button class="btn" onclick="printDoc(S.docs.find(x=>x.id==='${d.id}'))">Print</button>${ce?`<button class="btn" onclick="mclose();go('${d.doc_type}','${d.id}')">Edit</button>`:''}<button class="btn primary" onclick="mclose()">Close</button></div></div>`;
+ $('#modal').classList.add('show')}
+
+/* ---- Expenses: categories, location, payment method ---- */
+const XCATS=['Rent','Salary','Electricity','Water','Internet / Phone','Vehicle / Fuel','Transport','Marketing','Repairs','Tax / Fees','Other'];
+const XPM=['Cash','Bank transfer','KBZPay','Wave Pay','AYA Pay','Other'];
+let XF={f:'',t:'',c:'',l:''};
+const xcAll=()=>[...XCATS.filter(c=>c!=='Other'),...(S.xcats||[]).map(c=>c.name).filter(n=>!XCATS.includes(n)),'Other'];
+const _ld16=load;
+load=async function(){
+ const ok=await _ld16();if(!ok)return false;
+ const r=await sb.from('expense_categories').select('*').eq('tenant_id',T).order('name');
+ S.xcats=r.error?[]:r.data;return true};
+delete M.expenses;
+if(typeof SH!=='undefined')SH['Expenses']=()=>[['Date','Category','Description','Location','Paid by','Amount'],...S.expenses.map(r=>[r.expense_date,r.category||'Other',r.description,r.location_id?ln(r.location_id):'General',r.method||'',r.amount])];
+
+function xpDraw(){
+ const rows=S.expenses.filter(e=>(!XF.f||e.expense_date>=XF.f)&&(!XF.t||e.expense_date<=XF.t)&&(!XF.c||(e.category||'Other')===XF.c)&&(!XF.l||(XF.l==='_none'?!e.location_id:e.location_id===XF.l)))
+  .sort((a,b)=>b.expense_date.localeCompare(a.expense_date)),by={},tot=rows.reduce((a,e)=>a+ +e.amount,0);
+ rows.forEach(e=>{const k=e.category||'Other';by[k]=(by[k]||0)+ +e.amount});
+ const mx=Math.max(1,...Object.values(by));
+ $('#xp_sum').textContent=rows.length+' expenses · '+fmt(tot)+' Ks';
+ $('#xp_by').innerHTML=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(k)}</span><b>${fmt(v)}</b></div><div style="height:6px;background:#e8f0fe;border-radius:4px"><div style="height:6px;width:${v/mx*100}%;background:var(--pr);border-radius:4px"></div></div></div>`).join('')||'<div class="empty">No expenses.</div>';
+ $('#xp_b').innerHTML=rows.map(e=>`<tr><td>${e.expense_date}</td><td>${esc(e.category||'Other')}</td><td style="white-space:normal">${esc(e.description)}</td><td>${e.location_id?esc(ln(e.location_id)):'<span class="mu">General</span>'}</td><td>${esc(e.method||'')}</td><td class="num">${fmt(e.amount)}</td><td class="act"><button class="btn sm" onclick="xpForm('${e.id}')">Edit</button><button class="btn sm d" onclick="xpDel('${e.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No expenses found.</td></tr>'}
+V.expenses=()=>{XF={f:'',t:'',c:'',l:''};
+ return['Expenses',`<div class="page-head"><b id="xp_sum"></b><div class="tools"><button class="btn" onclick="xcMgr()">Categories</button><button class="btn primary" onclick="xpForm()">+ Add expense</button></div></div>
+ <details class="card"><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg">
+  <div class="field"><label>From</label><input class="input" type="date" onchange="XF.f=this.value;xpDraw()"></div>
+  <div class="field"><label>To</label><input class="input" type="date" onchange="XF.t=this.value;xpDraw()"></div>
+  <div class="field"><label>Category</label><select class="input" onchange="XF.c=this.value;xpDraw()"><option value="">All</option>${xcAll().map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>
+  <div class="field"><label>Location</label><select class="input" onchange="XF.l=this.value;xpDraw()"><option value="">All</option><option value="_none">General only</option>${S.locations.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('')}</select></div></div></details>
+ <div class="card"><div class="card-h">By category</div><div class="card-b" id="xp_by"></div></div>
+ <div class="card"><div class="tw"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Location</th><th>Paid by</th><th class="num">Amount</th><th></th></tr></thead><tbody id="xp_b"></tbody></table></div></div>`,xpDraw]};
+function xpForm(id){
+ const e=id?S.expenses.find(x=>x.id===id):{expense_date:today(),category:'',description:'',location_id:'',method:'Cash',amount:''};
+ const A=typeof ALW==='function'?ALW():null,locs=S.locations.filter(l=>!A||A.has(l.id)),
+  opt=(a,v)=>a.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+ $('#modal').innerHTML=`<div class="mbox"><h3>${id?'Edit':'Add'} expense</h3>
+ <div class="field"><label>Date</label><input class="input" id="xp_d" type="date" value="${e.expense_date}"></div>
+ <div class="field"><label>Category</label><select class="input" id="xp_c">${opt(xcAll(),e.category||'Other')}</select></div>
+ <div class="field"><label>Description</label><input class="input" id="xp_n" value="${esc(e.description)}"></div>
+ <div class="field"><label>Location</label><select class="input" id="xp_l">${A?'':'<option value="">General (all shops)</option>'}${locs.map(l=>`<option value="${l.id}" ${l.id===e.location_id?'selected':''}>${esc(l.name)}</option>`).join('')}</select></div>
+ <div class="field"><label>Paid by</label><select class="input" id="xp_m">${opt(XPM,e.method||'Cash')}</select></div>
+ <div class="field"><label>Amount</label><input class="input" id="xp_a" type="number" min="0" value="${e.amount}"></div>
+ <div class="mact"><button class="btn" onclick="mclose()">Cancel</button><button class="btn primary" onclick="xpSave('${id||''}')">Save</button></div></div>`;
+ $('#modal').classList.add('show')}
+async function xpSave(id){
+ const row={expense_date:$('#xp_d').value,category:$('#xp_c').value,description:$('#xp_n').value.trim()||$('#xp_c').value,location_id:$('#xp_l').value||null,method:$('#xp_m').value,amount:+$('#xp_a').value||0};
+ if(!row.expense_date)return toast('Choose a date');if(!(row.amount>0))return toast('Enter an amount');
+ const {error}=id?await sb.from('expenses').update(row).eq('id',id):await sb.from('expenses').insert({...row,tenant_id:T});
+ if(error)return toast(error.message);await load();mclose();toast('Saved');go('expenses')}
+async function xpDel(id){
+ if(!confirm('Delete this expense?'))return;
+ const {error}=await sb.from('expenses').delete().eq('id',id);if(error)return toast(error.message);await load();toast('Deleted');go('expenses')}
+function xcMgr(){
+ const cs=S.xcats||[];
+ $('#modal').innerHTML=`<div class="mbox"><h3>Expense categories</h3><p class="mu" style="margin-bottom:10px">Standard: ${esc(XCATS.join(', '))}. Add your own below.</p>
+ ${cs.map(c=>`<div class="row"><span>${esc(c.name)}</span><button class="btn sm d" onclick="xcDel('${c.id}')">Delete</button></div>`).join('')||'<p class="mu">No custom categories yet.</p>'}
+ <div class="field" style="margin-top:12px"><label>New category</label><input class="input" id="xc_n"></div>
+ <div class="mact"><button class="btn" onclick="mclose();go('expenses')">Close</button><button class="btn primary" onclick="xcAdd()">Add</button></div></div>`;
+ $('#modal').classList.add('show')}
+async function xcAdd(){
+ const n=$('#xc_n').value.trim();if(!n)return toast('Enter a name');
+ if(xcAll().some(c=>c.toLowerCase()===n.toLowerCase()))return toast('This category already exists');
+ const {error}=await sb.from('expense_categories').insert({tenant_id:T,name:n});if(error)return toast(error.message);
+ await load();toast('Added');xcMgr()}
+async function xcDel(id){
+ if(!confirm('Delete this category? Old expenses keep their category name.'))return;
+ const {error}=await sb.from('expense_categories').delete().eq('id',id);if(error)return toast(error.message);
+ await load();xcMgr()}
  start();
 </script></body></html>
  
