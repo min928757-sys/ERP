@@ -1090,6 +1090,152 @@ if(typeof SH!=='undefined')SH['Profit and Loss']=()=>{
   m++;if(m>12){m=1;y++}}
  const tot=[...Array(8)].map((_,i)=>rows.reduce((s,r)=>s+r[i+1],0));
  return[['Month','Net sales','Cost of goods sold','Gross profit','Expenses','Stock loss','Own use','Stock gains','Net profit'],...rows,['TOTAL',...tot]]};
+ /* ===== ADD-ON v19: settled statements, statement date filter, location filter, totals ===== */
+
+/* ---- 1. Receivable / Payable: option to include fully paid ---- */
+let OWALL=false;
+owBody=function(type){
+ const docs=vdocs(),q=($('#ow_q')?.value||'').toLowerCase(),isS=type==='sale',ret=isS?'sret':'pret';
+ const names=[...new Set(docs.filter(d=>d.doc_type===type||d.doc_type===ret).map(d=>d.partner||''))];
+ const rows=names.filter(n=>n.toLowerCase().includes(q)).map(n=>{
+   const x=ptnr(type,n,docs);let last='';
+   x.inv.forEach(o=>(o.d.payments||[]).forEach(p=>{if(!isRet(p)&&(p.pay_date||'')>last)last=p.pay_date||''}));
+   return{n,...x,last}})
+  .filter(x=>OWALL||x.tot>0.005||x.credit>0.005)
+  .sort((a,b)=>b.net-a.net||a.n.localeCompare(b.n));
+ OWN=rows.map(x=>x.n);
+ const e=$('#ow_sum');
+ if(e)e.textContent=rows.length+(isS?' customers':' suppliers')+' · '+(isS?'they owe ':'you owe ')+fmt(rows.reduce((a,x)=>a+x.net,0))+' Ks';
+ return rows.map((x,i)=>{
+  const o=x.open[0],days=o?Math.floor((Date.now()-new Date(o.d.doc_date))/864e5):0,settled=x.tot<=0.005&&x.credit<=0.005;
+  return`<tr><td><b>${esc(x.n||'-')}</b></td><td class="num">${x.open.length}</td><td class="num">${fmt(x.tot)}</td><td class="num">${x.credit?'-'+fmt(x.credit):''}</td><td class="num"><b>${fmt(x.net)}</b>${settled?' <span class="badge ok">Settled</span>':''}</td><td>${o?o.d.doc_date+' <span class="badge '+(days>30?'bad':'ok')+'">'+days+'d</span>':'-'}</td><td>${x.last||'-'}</td><td class="act"><button class="btn sm" onclick="stmtShow('${type}',OWN[${i}])">Statement</button>${x.tot>0.005?`<button class="btn sm ok" onclick="rcvOpen('${type}',OWN[${i}])">${isS?'Receive':'Pay'}</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="8" class="empty">Nothing found.</td></tr>'};
+const _owPage19=owPage;
+owPage=function(type){
+ OWALL=false;const r=_owPage19(type);
+ r[1]=r[1].replace('<b id="ow_sum"></b>','<b id="ow_sum"></b><label style="display:flex;gap:6px;align-items:center;font-size:13px;font-weight:400;color:inherit"><input type="checkbox" onchange="OWALL=this.checked;owDraw(\''+type+'\')"> Include fully paid</label>')
+  .replace('<th>Oldest unpaid</th>','<th>Oldest unpaid</th><th>Last payment</th>');
+ return r};
+
+/* Statement button on Customers / Suppliers pages */
+function stmtById(tbl,id){const r=S[tbl].find(x=>x.id===id);if(r)stmtShow(tbl==='customers'?'sale':'purchase',r.name)}
+const _ms19=master;
+master=function(id){
+ const r=_ms19(id);
+ if(id!=='customers'&&id!=='suppliers')return r;
+ const fix=h=>h.replace(/<button class="btn sm" onclick="mform\('(customers|suppliers)','([^']+)'\)">Edit<\/button>/g,(m,t,i)=>`<button class="btn sm" onclick="stmtById('${t}','${i}')">Statement</button>`+m);
+ r[1]=fix(r[1]);const fn=r[2];
+ r[2]=()=>{fn&&fn();const b=window.mb;if(b){window.mb=()=>fix(b());const t=$('#tb');if(t)t.innerHTML=window.mb()}};
+ return r};
+
+/* ---- 2. Statement with date filter ---- */
+function stmtView(){
+ const {type,name,f,t}=CURP,L=stmtLines(type,name),
+  before=f?L.filter(r=>r.date<f):[],open=before.length?before[before.length-1].bal:0,
+  rows=L.filter(r=>(!f||r.date>=f)&&(!t||r.date<=t));
+ return{rows,open,close:rows.length?rows[rows.length-1].bal:open,cur:L.length?L[L.length-1].bal:0}}
+function stmtShow(type,name){
+ const keep=$('#modal').classList.contains('show')&&CURP&&CURP.type===type&&CURP.name===name;
+ CURP={type,name,f:keep?(CURP.f||''):'',t:keep?(CURP.t||''):''};
+ stmtDraw()}
+function stmtPre(k){
+ const d=new Date(),x=new Date(d.getFullYear(),d.getMonth()-(k==='3'?2:0),1),p=n=>String(n).padStart(2,'0');
+ CURP.f=k==='all'?'':x.getFullYear()+'-'+p(x.getMonth()+1)+'-01';CURP.t='';stmtDraw()}
+function stmtDraw(){
+ const {type,name,f,t}=CURP,v=stmtView(),isS=type==='sale',ce=canEd(),filt=!!(f||t),
+  dr=v.rows.reduce((a,r)=>a+r.dr,0),cr=v.rows.reduce((a,r)=>a+r.cr,0);
+ $('#modal').innerHTML=`<div class="mbox" style="max-width:760px"><h3>Statement: ${esc(name||'-')}</h3>
+ <div class="hg" style="margin-bottom:8px"><div class="field"><label>From</label><input class="input" type="date" value="${f}" onchange="CURP.f=this.value;stmtDraw()"></div><div class="field"><label>To</label><input class="input" type="date" value="${t}" onchange="CURP.t=this.value;stmtDraw()"></div></div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><button class="btn sm" onclick="stmtPre('m')">This month</button><button class="btn sm" onclick="stmtPre('3')">Last 3 months</button><button class="btn sm" onclick="stmtPre('all')">All dates</button></div>
+ <div class="tw"><table><thead><tr><th>Date</th><th>Details</th><th class="num">${isS?'Sold':'Bought'}</th><th class="num">Paid / returned</th><th class="num">Balance</th><th></th></tr></thead><tbody>
+ ${filt?`<tr style="background:#f8fafc"><td>${f||''}</td><td><b>Opening balance</b></td><td></td><td></td><td class="num"><b>${fmt(v.open)}</b></td><td></td></tr>`:''}
+ ${v.rows.map(r=>`<tr><td>${r.date}</td><td style="white-space:normal">${esc(r.txt)}</td><td class="num">${r.dr?fmt(r.dr):''}</td><td class="num">${r.cr?fmt(r.cr):''}</td><td class="num">${fmt(r.bal)}</td><td class="act">${ce&&r.gi!==undefined?`<button class="btn sm" onclick="payEdit(${r.gi})">Edit</button><button class="btn sm d" onclick="payDel(${r.gi})">Delete</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">No records in this period.</td></tr>'}</tbody></table></div>
+ <div class="row"><span>${isS?'Sold':'Bought'} in this period</span><b>${fmt(dr)}</b></div>
+ <div class="row"><span>Paid / returned in this period</span><b>${fmt(cr)}</b></div>
+ <div class="tot" style="padding:12px 0"><span>${isS?'Customer owes':'You owe'}${filt?' at end of period':''}</span><span>${fmt(v.close)}</span> Ks</div>
+ ${filt&&Math.abs(v.cur-v.close)>0.005?`<p class="mu" style="margin-bottom:8px">Balance today (all dates): <b>${fmt(v.cur)} Ks</b></p>`:''}
+ <div class="mact"><button class="btn" onclick="prtStmt()">🖨 Print</button>${v.cur>0.005?`<button class="btn ok" onclick="rcvOpen('${type}',CURP.name)">${isS?'Receive payment':'Make payment'}</button>`:''}<button class="btn" onclick="stClose()">Close</button></div></div>`;
+ $('#modal').classList.add('show')}
+function prtStmt(){
+ const {type,name,f,t}=CURP,v=stmtView(),filt=!!(f||t);
+ $('#print').innerHTML=`<h2>${esc(shop)}</h2><h3>Statement of account</h3><p>${type==='sale'?'Customer':'Supplier'}: <b>${esc(name||'-')}</b> &nbsp; Printed: ${today()}</p><p>Period: ${filt?(f||'start')+' to '+(t||'today'):'All dates'}</p>
+ <table><thead><tr><th>Date</th><th>Details</th><th>${type==='sale'?'Sold':'Bought'}</th><th>Paid / returned</th><th>Balance</th></tr></thead><tbody>
+ ${filt?`<tr><td>${f||''}</td><td><b>Opening balance</b></td><td></td><td></td><td>${fmt(v.open)}</td></tr>`:''}
+ ${v.rows.map(r=>`<tr><td>${r.date}</td><td>${esc(r.txt)}</td><td>${r.dr?fmt(r.dr):''}</td><td>${r.cr?fmt(r.cr):''}</td><td>${fmt(r.bal)}</td></tr>`).join('')}</tbody></table>
+ <h3 style="text-align:right">Balance${filt?' at end of period':''}: ${fmt(v.close)} Ks</h3>`;window.print()}
+
+/* ---- 3. Location choice on Stock Balance and Records ---- */
+if(typeof PERMS!=='undefined'&&!PERMS.some(p=>p[0]==='stock_all'))PERMS.push(['stock_all','See stock of other locations']);
+const stockAll=()=>{const m=me();return m.role==='owner'||!m.perms||m.perms.includes('stock_all')||!ALW()};
+const vLocs=()=>{const A=ALW();return S.locations.filter(l=>!A||A.has(l.id))};
+const _tf19=tmForm;
+tmForm=function(i){_tf19(i);if(i<0){const c=document.querySelector('.tm_p[value="stock_all"]');if(c&&!c.disabled)c.checked=true}};
+function locSelHtml(){
+ const A=ALW();
+ return`<label style="display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600;color:inherit">Location <select class="input locsel" style="width:auto;padding:5px 8px" onchange="setLF(this.value)"><option value="">${A?'All my locations':'All locations'}</option>${vLocs().map(l=>`<option value="${l.id}" ${l.id===LF?'selected':''}>${esc(l.name)}</option>`).join('')}</select></label>`}
+function setLF(v){
+ LF=v;const t=$('#lf3');if(t)t.value=v;
+ document.querySelectorAll('.locsel').forEach(s=>s.value=v);
+ const id=document.querySelector('.si.on')?.dataset.id||'';
+ if(id==='stock')sbDraw();
+ else if(id==='adj-r'&&typeof adjDraw==='function')adjDraw();
+ else if(/-r$/.test(id))rfApply();
+ else if(typeof FV3==='function'&&FV3(id))go(id)}
+lf3=function(){
+ const A=ALW();
+ if(!vLocs().some(l=>l.id===LF))LF='';
+ let el=document.getElementById('lf3');
+ if(!el){el=document.createElement('select');el.id='lf3';el.className='input';el.style.cssText='width:auto;max-width:180px;padding:5px 8px';document.querySelector('.top .sp').after(el)}
+ el.onchange=()=>setLF(el.value);
+ el.innerHTML='<option value="">'+(A?'All my locations':'All locations')+'</option>'+vLocs().map(l=>`<option value="${l.id}" ${l.id===LF?'selected':''}>${esc(l.name)}</option>`).join('')};
+
+/* Stock Balance */
+let SB={q:'',low:false,hide:false};
+function sbLocs(){let L=stockAll()?S.locations:vLocs();if(LF)L=L.filter(l=>l.id===LF);return L}
+function sbDraw(){
+ const el=$('#st_tbl');if(!el)return;
+ const s=stock(),L=sbLocs(),q=SB.q.toLowerCase(),many=L.length>1,tot=c=>L.reduce((a,l)=>a+((s[c]||{})[l.id]||0),0),
+  rows=S.products.filter(p=>!q||((p.code||'')+' '+(p.description||'')).toLowerCase().includes(q)).map(p=>({p,t:tot(p.code)})).filter(x=>(!SB.low||x.t<=x.p.min_stock)&&(!SB.hide||x.t!==0));
+ $('#st_sum').textContent=rows.length+' products · stock value '+fmt(rows.reduce((a,x)=>a+x.t*x.p.purchase_price,0))+' Ks';
+ el.innerHTML=`<table><thead><tr><th>Code</th><th>Description</th>${L.map(l=>`<th class="num">${esc(l.name)}</th>`).join('')}${many?'<th class="num">Total</th>':''}<th class="num">Value</th></tr></thead><tbody>${rows.map(({p,t})=>`<tr class="${t<=p.min_stock?'low':''}"><td>${esc(p.code)}</td><td style="white-space:normal">${esc(p.description)}</td>${L.map(l=>`<td class="num">${fmt((s[p.code]||{})[l.id])}</td>`).join('')}${many?`<td class="num"><b>${fmt(t)}</b></td>`:''}<td class="num">${fmt(t*p.purchase_price)}</td></tr>`).join('')||`<tr><td colspan="${L.length+4}" class="empty">No products found.</td></tr>`}</tbody></table>`}
+V.stock=()=>{
+ SB={q:'',low:false,hide:false};
+ const ck='display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px;color:inherit';
+ return['Stock Balance',`<div class="page-head">${locSelHtml()}<b id="st_sum"></b></div>
+ <details class="card"><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg">
+  <div class="field"><label>Product code or description</label><input class="input" oninput="SB.q=this.value;sbDraw()"></div>
+  <div class="field"><label>&nbsp;</label><label style="${ck}"><input type="checkbox" onchange="SB.low=this.checked;sbDraw()"> Low stock only</label></div>
+  <div class="field"><label>&nbsp;</label><label style="${ck}"><input type="checkbox" onchange="SB.hide=this.checked;sbDraw()"> Hide zero stock</label></div></div></details>
+ <div class="card"><div class="tw" id="st_tbl"></div></div>`,sbDraw]};
+
+/* ---- 4. Records: location choice, totals cards, View / Edit / Delete ---- */
+function rfRows(type){
+ const q=RF.q.toLowerCase(),p=RF.p.toLowerCase();
+ return vdocs().filter(d=>d.doc_type===type)
+  .filter(d=>!q||((d.doc_no||'')+' '+(d.partner||'')+' '+d.doc_date+' '+(d.note||'')).toLowerCase().includes(q))
+  .filter(d=>(!RF.f||d.doc_date>=RF.f)&&(!RF.t||d.doc_date<=RF.t)&&(!RF.st||pst(d)===RF.st))
+  .map(d=>({d,hit:p?d.lines.filter(l=>((l.code||'')+' '+(l.desc||'')).toLowerCase().includes(p)):[]}))
+  .filter(x=>!p||x.hit.length)
+  .sort((a,b)=>b.d.doc_date.localeCompare(a.d.doc_date)||b.d.doc_no.localeCompare(a.d.doc_no))}
+rec=function(type){
+ RF={q:'',p:'',f:'',t:'',st:''};
+ const c=D[type],isT=type==='transfer',isP=type==='sale'||type==='purchase',
+  eye=id=>`<button class="btn sm" title="View" aria-label="View" onclick="viewDoc('${id}')">${typeof svg==='function'&&typeof IC!=='undefined'&&IC.eye?svg('eye'):'View'}</button>`;
+ const body=()=>{
+  const rows=rfRows(type),hasP=!!RF.p.trim(),tot=rows.reduce((a,x)=>a+dt(x.d),0),paid=rows.reduce((a,x)=>a+(x.d.paid||0),0),
+   per=(RF.f||RF.t)?(RF.f||'start')+' to '+(RF.t||'today'):'All dates',el=$('#rtiles');
+  if(el){
+   const T=[['Records',fmt(rows.length)+'<div class="mu" style="font-size:12px;font-weight:400">'+esc(per)+'</div>']];
+   if(!isT)T.push(['Total amount',fmt(tot)+' Ks']);
+   if(isP)T.push(['Paid',fmt(paid)+' Ks'],['Unpaid',fmt(tot-paid)+' Ks']);
+   if(hasP){const mq=rows.reduce((a,x)=>a+x.hit.reduce((b,l)=>b+l.qty,0),0),ma=rows.reduce((a,x)=>a+x.hit.reduce((b,l)=>b+l.qty*l.price,0),0);
+    T.push(['Matching items',fmt(mq)+' qty'+(isT?'':' · '+fmt(ma)+' Ks')])}
+   el.innerHTML=T.map(([l,v])=>`<div class="card kpi"><div class="mu">${l}</div><div class="val" style="font-size:19px">${v}</div></div>`).join('')}
+  return rows.map(({d,hit})=>`<tr><td><b>${d.doc_no}</b></td><td>${d.doc_date}</td><td>${isT?esc(ln(d.location_id))+' → '+esc(ln(d.to_location_id)):esc(d.partner)}</td>${isT?'':`<td>${esc(ln(d.location_id))}</td>`}<td class="${hasP?'':'num'}" style="${hasP?'white-space:normal;min-width:150px':''}">${hasP?hit.map(l=>esc(l.code)+' × '+fmt(l.qty)).join(', '):d.lines.length}</td>${isT?'':`<td class="num">${fmt(dt(d))}</td>`}${isP?`<td>${pBadge(pst(d))}</td>`:''}<td class="act">${eye(d.id)}<button class="btn sm" onclick="go('${type}','${d.id}')">Edit</button><button class="btn sm d" onclick="ddel('${type}','${d.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">No records found.</td></tr>'};
+ const fld=(l,k,ty,ph)=>`<div class="field"><label>${l}</label><input class="input" type="${ty}" placeholder="${ph}" oninput="RF.${k}=this.value;rfApply()" onchange="RF.${k}=this.value;rfApply()"></div>`;
+ return[c.t+' Records',`<div class="page-head">${locSelHtml()}<button class="btn primary" onclick="go('${type}')">+ New</button></div>
+ <div class="grid kpis" id="rtiles" style="margin-bottom:14px"></div>
+ <details class="card"><summary style="padding:13px 18px;cursor:pointer;font-weight:600">Filter</summary><div class="card-b hg">${fld('Search','q','text','No, name, date...')}${fld('Product code or description','p','text','e.g. P-001')}${fld('From','f','date','')}${fld('To','t','date','')}${isP?'<div class="field"><label>Status</label><select class="input" onchange="RF.st=this.value;rfApply()"><option value="">All</option><option>Paid</option><option>Partial</option><option>Unpaid</option></select></div>':''}<div class="field"><label>&nbsp;</label><button class="btn" onclick="go(\''+type+'-r\')">Clear</button></div></div></details>
+ <div class="card"><div class="tw"><table><thead><tr><th>No.</th><th>Date</th><th>${isT?'From → To':c.pl}</th>${isT?'':'<th>Location</th>'}<th>Items</th>${isT?'':'<th class="num">Total</th>'}${isP?'<th>Status</th>':''}<th></th></tr></thead><tbody id="tb">${body()}</tbody></table></div></div>`,()=>{window.mb=body;rfApply()}]};
  start();
 </script></body></html>
  
