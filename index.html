@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>RetailPro ERP</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
-:root{--bg:#f3f5f9;--ln:#e3e8ef;--tx:#1a2233;--mu:#667085;--sd:#101a30;--sh:#1b2846;--pr:#1d5fd6;--ok:#0f9d58;--bad:#d92d20}
+:root{--bg:#f3f5f9;--ln:#e3e8ef;--tx:#1a2233;--mu:#667085;--sd:#101a30;--sh:#1b2846;--pr:#1d5fd6;--ok:#0f9d58;--bad:#d92d20;--warn:#c77700}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,"Noto Sans Myanmar",sans-serif;background:var(--bg);color:var(--tx);font-size:14px;height:100vh;overflow:hidden}
-button,input,select{font:inherit;color:inherit}.hidden{display:none!important}
-@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.view{animation:in .25s}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;height:100vh;overflow:hidden}
+button,input,select{font:inherit;color:inherit}:focus-visible{outline:2px solid var(--pr);outline-offset:2px}
+.hidden{display:none!important}@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.view{animation:in .25s}
 #login{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(160deg,#101a30,#1d3a78);z-index:100;padding:16px}
 .lc{background:#fff;border-radius:12px;padding:28px;width:100%;max-width:370px}.lc h2{font-size:22px}.lc .s{color:var(--mu);margin:4px 0 18px}
 .tabs{display:flex;gap:6px;margin-bottom:16px}.tabs .btn{flex:1;justify-content:center}
@@ -17,466 +18,40 @@ button,input,select{font:inherit;color:inherit}.hidden{display:none!important}
 .btn:hover{background:#f6f8fb}.btn.primary{background:var(--pr);border-color:var(--pr);color:#fff}.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}.btn.sm{padding:4px 9px;font-size:12px}.btn.d{color:var(--bad)}
 .err{color:var(--bad);font-size:12px;margin-top:10px;min-height:16px}
 .app{display:flex;height:100vh}.sidebar{width:250px;background:var(--sd);color:#c3cde2;display:flex;flex-direction:column;flex-shrink:0;transition:transform .25s}
-.brand{height:60px;padding:0 18px;display:flex;align-items:center;font-weight:700;font-size:17px;color:#fff;border-bottom:1px solid #223152}
-.nav{flex:1;overflow-y:auto;padding:10px}.gh,.si{display:flex;gap:10px;width:100%;border:0;background:none;color:inherit;cursor:pointer;text-align:left;border-radius:6px}
-.gh{padding:10px 12px;font-weight:600}.gh:hover,.si:hover{background:var(--sh);color:#fff}.gh i{margin-left:auto;font-style:normal;transition:transform .25s}.grp.open .gh i{transform:rotate(90deg)}
-.sub{max-height:0;overflow:hidden;transition:max-height .28s}.grp.open .sub{max-height:320px}.si{padding:8px 12px 8px 38px;font-size:13px;color:#98a6c4}.si.on{background:var(--pr);color:#fff;font-weight:600}.gh.si{padding:10px 12px;color:#c3cde2}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}.top{height:60px;background:#fff;border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:14px;padding:0 20px}
-.top h1{font-size:17px}.sp{flex:1}.mu{color:var(--mu);font-size:12px}.burger{display:none}.content{flex:1;overflow-y:auto;padding:20px}
-.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.tools{display:flex;gap:10px;flex-wrap:wrap}.tools .input{width:230px}
-.grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);margin-bottom:14px}.card{background:#fff;border:1px solid var(--ln);border-radius:8px;margin-bottom:14px}.grid .card{margin:0}
-.card-h{padding:13px 18px;border-bottom:1px solid var(--ln);font-weight:600}.card-b{padding:18px}.kpi{padding:16px 18px}.kpi .val{font-size:21px;font-weight:700;margin-top:4px}
+.brand{height:60px;padding:0 18px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:#fff;border-bottom:1px solid #223152}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--pr);display:grid;place-items:center}.logo .ic{color:#fff}
+.nav{flex:1;overflow-y:auto;padding:10px}.gh,.si{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:inherit;cursor:pointer;text-align:left;border-radius:6px}
+.gh{padding:10px 12px;font-weight:600;font-size:13.5px;margin-top:2px}.gh span{flex:1}.gh:hover,.si:hover{background:var(--sh);color:#fff}.gh i{font-style:normal;transition:transform .25s}.grp.open .gh i{transform:rotate(90deg)}
+.sub{max-height:0;overflow:hidden;transition:max-height .28s}.grp.open .sub{max-height:420px}.si{padding:8px 12px 8px 40px;font-size:13px;color:#98a6c4}.si.on{background:var(--pr);color:#fff;font-weight:600}.gh.si{padding:10px 12px;color:#c3cde2}.gh.si.on{color:#fff}
+.ic{width:18px;height:18px;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}.top{height:60px;background:#fff;border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:12px;padding:0 20px}
+.top h1{font-size:17px}.sp{flex:1}.burger{display:none}#sbn{padding:10px 20px;font-size:13px;font-weight:600}.content{flex:1;overflow-y:auto;padding:20px}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);margin-bottom:14px}.hg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:8px;margin-bottom:14px}.grid .card{margin:0}.card-h{padding:13px 18px;border-bottom:1px solid var(--ln);font-weight:600}.card-b{padding:18px}
+.kpi{padding:16px 18px}.kpi .val{font-size:21px;font-weight:700;margin-top:4px}.mu{color:var(--mu);font-size:12px}
 .tw{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:10px 16px;text-align:left;border-bottom:1px solid var(--ln);font-size:13px;white-space:nowrap}
-th{background:#f8fafc;color:var(--mu);font-size:12px}tr:last-child td{border:0}tr.low td{background:#fff8f7}.num{text-align:right!important}.act{text-align:right!important}.act .btn{margin-left:4px}
-.empty{padding:26px;text-align:center;color:var(--mu)}.hg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
-.entry{display:grid;grid-template-columns:1.2fr 2fr .7fr .9fr auto;gap:10px;align-items:end}.entry .field{margin:0}
-.tot{display:flex;justify-content:flex-end;gap:20px;padding:14px 18px;font-size:16px;font-weight:700;border-top:1px solid var(--ln)}
+th{background:#f8fafc;color:var(--mu);font-size:12px}tr:last-child td{border:0}.num{text-align:right!important}.act{text-align:right!important}.act .btn{margin-left:4px}
+.empty{padding:26px;text-align:center;color:var(--mu)}.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ln)}
+.badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}.badge.ok{background:#e6f6ee;color:var(--ok)}.badge.bad{background:#fdecea;color:var(--bad)}.badge.warn{background:#fff4dd;color:var(--warn)}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;place-items:center;z-index:150}.modal.show{display:grid}
-.mbox{background:#fff;border-radius:10px;padding:22px;width:92%;max-width:430px;max-height:92vh;overflow:auto}.mbox h3{margin-bottom:14px}.mact{display:flex;justify-content:flex-end;gap:10px}
+.mbox{background:#fff;border-radius:10px;padding:22px;width:92%;max-width:430px;max-height:92vh;overflow:auto}.mbox h3{margin-bottom:14px}.mact{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--tx);color:#fff;padding:12px 18px;border-radius:8px;z-index:200;max-width:80%}
-.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ln)}#print{display:none}
-@media print{body{overflow:visible;height:auto}.app,#login,.modal,.toast{display:none!important}#print{display:block;padding:20px;color:#000}#print table{border:1px solid #000;margin:12px 0}#print th,#print td{border:1px solid #000;padding:6px 10px}.sign{display:flex;justify-content:space-between;margin-top:60px}.sign span{border-top:1px solid #000;width:180px;text-align:center}}
-@media(max-width:860px){.sidebar{position:fixed;z-index:90;height:100%;transform:translateX(-100%)}.sidebar.open{transform:none}.burger{display:inline-flex}.grid{grid-template-columns:1fr 1fr}.entry{grid-template-columns:1fr 1fr}}
+.dbg{position:fixed;left:0;right:0;bottom:0;background:#b42318;color:#fff;padding:10px 14px;font-size:12px;z-index:999;white-space:pre-wrap}
+#print{display:none}@media print{body{overflow:visible;height:auto}.app,#login,.modal,.toast,.dbg{display:none!important}#print{display:block;padding:20px;color:#000}#print table{border:1px solid #000;margin:12px 0}#print th,#print td{border:1px solid #000;padding:6px 10px}.sign{display:flex;justify-content:space-between;margin-top:60px}.sign span{border-top:1px solid #000;width:180px;text-align:center}}
+body.viewer .wr{display:none!important}
+@media(max-width:860px){.sidebar{position:fixed;z-index:90;height:100%;transform:translateX(-100%)}.sidebar.open{transform:none}.burger{display:inline-flex}.grid{grid-template-columns:1fr 1fr}}
 </style></head><body>
-
 <div id="login"><div class="lc"><h2>RetailPro ERP</h2><p class="s">Sign in to your shop</p>
-<div class="tabs"><button class="btn primary" id="t_in" onclick="mode(0)">Sign in</button><button class="btn" id="t_up" onclick="mode(1)">Create account</button></div>
+<div class="tabs"><button class="btn primary" id="t_in">Sign in</button><button class="btn" id="t_up">Create account</button></div>
 <div class="field hidden" id="snw"><label>Shop name</label><input class="input" id="sn"></div>
-<div class="field"><label>Email</label><input class="input" id="em" type="email"></div>
-<div class="field"><label>Password (min 6 characters)</label><input class="input" id="pw" type="password"></div>
-<button class="btn primary" style="width:100%;justify-content:center;padding:11px" id="go" onclick="doAuth()">Sign in</button><p class="err" id="err"></p></div></div>
-
-<div class="app hidden" id="app"><aside class="sidebar" id="sidebar"><div class="brand">📦 RetailPro</div><nav class="nav" id="nav"></nav></aside>
-<div class="main"><header class="top"><button class="btn sm burger" onclick="$('#sidebar').classList.toggle('open')">☰</button><h1 id="title"></h1><div class="sp"></div><span class="mu" id="shop"></span><button class="btn sm" onclick="logout()">Logout</button></header>
-<main class="content" id="content"></main></div></div>
+<div class="field"><label>Email</label><input class="input" id="em" type="email" autocomplete="username"></div>
+<div class="field"><label>Password (min 6 characters)</label><input class="input" id="pw" type="password" autocomplete="current-password"></div>
+<button class="btn primary" style="width:100%;justify-content:center;padding:11px" id="go">Sign in</button>
+<p style="text-align:center;margin-top:12px"><a href="#" id="fp" style="color:var(--pr);font-size:13px">Forgot password?</a></p><p class="err" id="err"></p></div></div>
+<div class="app hidden" id="app"><aside class="sidebar" id="sidebar"><div class="brand"><span class="logo" id="logo"></span>RetailPro</div><nav class="nav" id="nav"></nav></aside>
+<div class="main"><header class="top"><button class="btn sm burger" id="burger">☰</button><h1 id="title"></h1><div class="sp"></div><span id="shop"></span><button class="btn sm" id="lo">Logout</button></header>
+<div id="sbn" class="hidden"></div><main class="content" id="content"></main></div></div>
 <div class="modal" id="modal"></div><div id="print"></div>
-
-<script>
-const sb=supabase.createClient(   location.origin+'/sb','sb_publishable_aLwnGUpyhaxJqBqmOIy6dw_3pG_Lkwg');
-const $=s=>document.querySelector(s),fmt=n=>(+n||0).toLocaleString('en-US'),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),today=()=>new Date().toISOString().slice(0,10);
-let S={},cur,signup=0,shop='';
-const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)};
-const ln=id=>S.locations.find(l=>l.id===id)?.name||'-',P=c=>S.products.find(p=>p.code===c)||{};
-const dt=d=>d.lines.reduce((a,l)=>a+l.qty*l.price,0),sum=a=>a.reduce((x,d)=>x+dt(d),0),dd=t=>S.docs.filter(d=>d.doc_type===t);
-const PE=[['code','Code'],['name','Name'],['phone','Phone'],['address','Address']];
-const M={products:{t:'Product Master',f:[['code','Product Code'],['description','Description'],['purchase_price','Purchase Price','number'],['sale_price','Sale Price','number'],['unit','Unit'],['min_stock','Min Stock','number']]},
-customers:{t:'Customers',f:PE},suppliers:{t:'Suppliers',f:PE},locations:{t:'Locations',f:[['code','Code'],['name','Location Name']]},
-expenses:{t:'Expenses',f:[['expense_date','Date','date'],['description','Description'],['amount','Amount','number']]}};
-const D={sale:{t:'Sale Invoice',pre:'SI',p:'customers',pl:'Customer',pr:'sale_price',s:-1},sret:{t:'Sale Return',pre:'SR',p:'customers',pl:'Customer',pr:'sale_price',s:1},
-purchase:{t:'Purchase Invoice',pre:'PI',p:'suppliers',pl:'Supplier',pr:'purchase_price',s:1},pret:{t:'Purchase Return',pre:'PR',p:'suppliers',pl:'Supplier',pr:'purchase_price',s:-1},transfer:{t:'Stock Transfer',pre:'ST'}};
-const NAV=[['Dashboard','📊',[['dash','Dashboard']]],['Sales','🧾',[['sale','New Sale Invoice'],['sale-r','Sale Records'],['sret','Sale Return'],['sret-r','Return Records'],['customers','Customers']]],
-['Purchase','📥',[['purchase','New Purchase Invoice'],['purchase-r','Purchase Records'],['pret','Purchase Return'],['pret-r','Return Records'],['suppliers','Suppliers']]],
-['Inventory','🏷️',[['products','Product Master'],['stock','Stock Balance'],['transfer','New Stock Transfer'],['transfer-r','Transfer Records'],['locations','Locations']]],['Accounts','💰',[['expenses','Expenses']]]];
-
-/* ---------- auth ---------- */
-function mode(m){signup=m;$('#snw').classList.toggle('hidden',!m);$('#go').textContent=m?'Create account':'Sign in';$('#t_in').className='btn'+(m?'':' primary');$('#t_up').className='btn'+(m?' primary':'')}
-const err=m=>$('#err').textContent=m;
-async function doAuth(){err('');const e=$('#em').value.trim(),p=$('#pw').value;if(!e||p.length<6)return err('Enter email and a password of 6+ characters');
- if(signup){const sn=$('#sn').value.trim();if(!sn)return err('Enter your shop name');
-  const {data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{shop:sn}}});if(error)return err(error.message);
-  if(!data.session)return err('Account created. Please confirm via the email we sent, then sign in.')}
- else{const {error}=await sb.auth.signInWithPassword({email:e,password:p});if(error)return err(error.message)}
- start()}
-async function start(){const {data:{session}}=await sb.auth.getSession();if(!session)return;
- const {data:pr}=await sb.from('profiles').select('tenant_id').maybeSingle();
- if(!pr){const {error}=await sb.rpc('create_shop',{shop_name:session.user.user_metadata.shop||'My Shop'});if(error)return err(error.message)}
- const {data:t}=await sb.from('tenants').select('name').maybeSingle();shop=t?.name||'';$('#shop').textContent=shop;
- if(!await load())return;$('#login').classList.add('hidden');$('#app').classList.remove('hidden');buildNav();go('dash')}
-async function logout(){await sb.auth.signOut();location.reload()}
-$('#pw').addEventListener('keydown',e=>e.key==='Enter'&&doAuth());
-
-/* ---------- data ---------- */
-async function load(){const r=await Promise.all([...['locations','products','customers','suppliers','expenses'].map(t=>sb.from(t).select('*')),sb.from('documents').select('*,document_lines(*)')]);
- const bad=r.find(x=>x.error);if(bad){err(bad.error.message);toast(bad.error.message);return false}
- [S.locations,S.products,S.customers,S.suppliers,S.expenses]=r.slice(0,5).map(x=>x.data);
- S.docs=r[5].data.map(d=>({...d,lines:d.document_lines.map(l=>({code:l.product_code,desc:l.description,qty:+l.qty,price:+l.price}))}));return true}
-function stock(){const s={},a=(c,l,q)=>{(s[c]=s[c]||{})[l]=(s[c][l]||0)+q};
- S.docs.forEach(d=>d.lines.forEach(l=>{if(d.doc_type==='transfer'){a(l.code,d.location_id,-l.qty);a(l.code,d.to_location_id,l.qty)}else a(l.code,d.location_id,D[d.doc_type].s*l.qty)}));return s}
-const tq=c=>Object.values(stock()[c]||{}).reduce((a,b)=>a+b,0);
-function neg(){const s=stock();for(const c in s)for(const l in s[c])if(s[c][l]<0)return c+' at '+ln(l)}
-const nextNo=t=>D[t].pre+String(dd(t).reduce((m,d)=>Math.max(m,parseInt(d.doc_no.slice(2))||0),0)+1).padStart(4,'0');
-
-/* ---------- nav ---------- */
-function buildNav(){$('#nav').innerHTML=NAV.map(([g,ic,it])=>it.length<2?`<button class="gh si" data-id="${it[0][0]}" onclick="go('${it[0][0]}')">${ic} ${g}</button>`:
- `<div class="grp"><button class="gh" onclick="this.parentNode.classList.toggle('open')">${ic} ${g}<i>›</i></button><div class="sub">${it.map(([id,t])=>`<button class="si" data-id="${id}" onclick="go('${id}')">${t}</button>`).join('')}</div></div>`).join('')}
-function go(id,arg){document.querySelectorAll('.si').forEach(b=>{const on=b.dataset.id===id;b.classList.toggle('on',on);if(on)b.closest('.grp')?.classList.add('open')});
- $('#sidebar').classList.remove('open');const base=id.replace(/-r$/,'');
- const [t,h,fn]=M[id]?master(id):D[base]&&id!==base?rec(base):D[id]?doc(id,arg):V[id]();
- $('#title').textContent=t;const c=$('#content');c.innerHTML=`<div class="view">${h}</div>`;c.scrollTop=0;fn&&fn()}
-
-/* ---------- master data ---------- */
-function master(id){const c=M[id],body=()=>{const q=($('#q')?.value||'').toLowerCase();
- return S[id].filter(r=>JSON.stringify(r).toLowerCase().includes(q)).map(r=>`<tr>${c.f.map(([k,,ty])=>`<td class="${ty==='number'?'num':''}">${ty==='number'?fmt(r[k]):esc(r[k])}</td>`).join('')}${id==='products'?`<td class="num">${fmt(tq(r.code))}</td>`:''}<td class="act"><button class="btn sm" onclick="mform('${id}','${r.id}')">Edit</button><button class="btn sm d" onclick="mdel('${id}','${r.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">No records yet. Click "Add New".</td></tr>'};
- return[c.t,`<div class="page-head"><div class="tools"><input class="input" id="q" placeholder="Search..." oninput="$('#tb').innerHTML=window.mb()"><button class="btn primary" onclick="mform('${id}')">+ Add New</button></div></div>
- <div class="card"><div class="tw"><table><thead><tr>${c.f.map(([,l,ty])=>`<th class="${ty==='number'?'num':''}">${l}</th>`).join('')}${id==='products'?'<th class="num">In Stock</th>':''}<th></th></tr></thead><tbody id="tb">${body()}</tbody></table></div></div>`,()=>window.mb=body]}
-function mform(id,rid){const c=M[id],r=rid?S[id].find(x=>x.id===rid):{};
- $('#modal').innerHTML=`<div class="mbox"><h3>${rid?'Edit':'Add'} – ${c.t}</h3>${c.f.map(([k,l,ty])=>`<div class="field"><label>${l}</label><input class="input" id="f_${k}" type="${ty||'text'}" ${rid&&id==='products'&&k==='code'?'readonly':''} value="${esc(r[k]??(ty==='date'?today():''))}"></div>`).join('')}<div class="mact"><button class="btn" onclick="mclose()">Cancel</button><button class="btn primary" onclick="msave('${id}','${rid||''}')">Save</button></div></div>`;
- $('#modal').classList.add('show')}
-const mclose=()=>$('#modal').classList.remove('show');
-async function msave(id,rid){const c=M[id],o={};c.f.forEach(([k,,ty])=>o[k]=ty==='number'?+$('#f_'+k).value||0:$('#f_'+k).value.trim());
- if(!o[c.f[0][0]]||!o[c.f[1][0]])return toast('Please fill '+c.f[0][1]+' and '+c.f[1][1]);
- if(c.f[0][0]==='code'&&S[id].some(x=>x.code===o.code&&x.id!==rid))return toast('This code already exists');
- const {error}=rid?await sb.from(id).update(o).eq('id',rid):await sb.from(id).insert(o);if(error)return toast(error.message);
- await load();mclose();toast('Saved');go(id)}
-async function mdel(id,rid){const r=S[id].find(x=>x.id===rid);
- const used=id==='products'?S.docs.some(d=>d.lines.some(l=>l.code===r.code)):id==='locations'?S.docs.some(d=>d.location_id===rid||d.to_location_id===rid):false;
- if(used)return toast('Cannot delete: already used in transactions');if(!confirm('Delete this record?'))return;
- const {error}=await sb.from(id).delete().eq('id',rid);if(error)return toast(error.message);await load();go(id)}
-
-/* ---------- documents ---------- */
-function doc(type,eid){const c=D[type],isT=type==='transfer',e=eid&&S.docs.find(d=>d.id===eid);
- cur=e?JSON.parse(JSON.stringify(e)):{doc_type:type,doc_date:today(),partner:isT?'':(S[c.p][0]?.name||''),location_id:S.locations[0]?.id,to_location_id:(S.locations[1]||S.locations[0])?.id,note:'',lines:[]};
- const lo=v=>S.locations.map(l=>`<option value="${l.id}" ${l.id===v?'selected':''}>${esc(l.name)}</option>`).join('');
- return[(e?'Edit ':'New ')+c.t,`<div class="page-head"><div></div><div class="tools"><button class="btn" onclick="go('${type}')">New</button><button class="btn" onclick="cur.lines.length?printDoc(cur):toast('Add an item first')">🖨 Print</button><button class="btn ok" onclick="saveDoc()">💾 Save</button></div></div>
- <div class="card"><div class="card-b hg"><div class="field"><label>Document No.</label><input class="input" value="${cur.doc_no||nextNo(type)}" readonly></div>
- <div class="field"><label>Date</label><input class="input" type="date" value="${cur.doc_date}" onchange="cur.doc_date=this.value"></div>
- ${isT?`<div class="field"><label>From Location</label><select class="input" onchange="cur.location_id=this.value;pick()">${lo(cur.location_id)}</select></div><div class="field"><label>To Location</label><select class="input" onchange="cur.to_location_id=this.value">${lo(cur.to_location_id)}</select></div>`:
- `<div class="field"><label>${c.pl}</label><select class="input" onchange="cur.partner=this.value">${S[c.p].map(p=>`<option ${p.name===cur.partner?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div><div class="field"><label>Location</label><select class="input" onchange="cur.location_id=this.value;pick()">${lo(cur.location_id)}</select></div>`}
- <div class="field"><label>Note</label><input class="input" value="${esc(cur.note)}" oninput="cur.note=this.value"></div></div></div>
- <div class="card"><div class="card-b entry"><datalist id="pl">${S.products.map(p=>`<option value="${esc(p.code)}">${esc(p.description)}</option>`).join('')}</datalist>
- <div class="field"><label>Product Code</label><input class="input" id="e_code" list="pl" oninput="pick()"></div>
- <div class="field"><label>Description <small id="e_av" style="color:var(--ok)"></small></label><input class="input" id="e_desc" readonly></div>
- <div class="field"><label>Qty</label><input class="input" id="e_qty" type="number" min="1" value="1"></div>
- ${isT?'<div></div>':'<div class="field"><label>Price</label><input class="input" id="e_price" type="number"></div>'}<button class="btn primary" onclick="addLine()">+ Add</button></div></div>
- <div class="card"><div class="tw" id="lines"></div><div class="tot" ${isT?'hidden':''}><span>Total</span><span id="tot">0</span> Ks</div></div>`,drawLines]}
-function pick(){const p=P($('#e_code').value.trim());$('#e_desc').value=p.description||'';const pr=$('#e_price');if(pr&&p.code)pr.value=p[D[cur.doc_type].pr];
- $('#e_av').textContent=p.code?'(stock here: '+((stock()[p.code]||{})[cur.location_id]||0)+')':''}
-function addLine(){const code=$('#e_code').value.trim(),p=P(code),q=+$('#e_qty').value;if(!p.code)return toast('Select a valid product code');if(!(q>0))return toast('Enter a quantity');
- const price=cur.doc_type==='transfer'?0:+$('#e_price').value||0,ex=cur.lines.find(l=>l.code===code);
- ex?(ex.qty+=q,ex.price=price):cur.lines.push({code,desc:p.description,qty:q,price});$('#e_code').value='';$('#e_qty').value=1;pick();drawLines();$('#e_code').focus()}
-function drawLines(){const isT=cur.doc_type==='transfer';
- $('#lines').innerHTML=`<table><thead><tr><th>#</th><th>Code</th><th>Description</th><th class="num">Qty</th>${isT?'':'<th class="num">Price</th><th class="num">Amount</th>'}<th></th></tr></thead><tbody>${cur.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td>${esc(l.desc)}</td><td class="num">${fmt(l.qty)}</td>${isT?'':`<td class="num">${fmt(l.price)}</td><td class="num">${fmt(l.qty*l.price)}</td>`}<td class="act"><button class="btn sm" onclick="editLine(${i})">Edit</button><button class="btn sm d" onclick="cur.lines.splice(${i},1);drawLines()">Delete</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No items yet.</td></tr>'}</tbody></table>`;
- if($('#tot'))$('#tot').textContent=fmt(dt(cur))}
-function editLine(i){const l=cur.lines.splice(i,1)[0];$('#e_code').value=l.code;pick();$('#e_qty').value=l.qty;if($('#e_price'))$('#e_price').value=l.price;drawLines()}
-async function saveDoc(){const type=cur.doc_type,isT=type==='transfer';
- if(!cur.lines.length)return toast('Add at least one item');if(isT&&cur.location_id===cur.to_location_id)return toast('From and To must be different');
- const keep=S.docs;S.docs=[...keep.filter(d=>d.id!==cur.id),cur];const bad=neg();S.docs=keep;if(bad)return toast('Not enough stock: '+bad);
- const row={doc_type:type,doc_date:cur.doc_date,partner:isT?null:cur.partner,location_id:cur.location_id,to_location_id:isT?cur.to_location_id:null,note:cur.note};
- let id=cur.id,r;
- if(id){r=await sb.from('documents').update(row).eq('id',id);if(r.error)return toast(r.error.message);await sb.from('document_lines').delete().eq('document_id',id)}
- else{row.doc_no=nextNo(type);r=await sb.from('documents').insert(row).select().single();if(r.error)return toast(r.error.message);id=r.data.id;cur.doc_no=row.doc_no}
- r=await sb.from('document_lines').insert(cur.lines.map(l=>({document_id:id,product_code:l.code,description:l.desc,qty:l.qty,price:l.price})));if(r.error)return toast(r.error.message);
- await load();toast('Saved '+cur.doc_no);if(confirm('Saved. Print now?'))printDoc(cur);go(type+'-r')}
-function printDoc(d){const c=D[d.doc_type],isT=d.doc_type==='transfer';
- $('#print').innerHTML=`<h2>${esc(shop)}</h2><h3>${c.t}</h3><p>No: ${d.doc_no||'(unsaved)'} &nbsp; Date: ${d.doc_date}</p><p>${isT?`From: ${esc(ln(d.location_id))} &nbsp; To: ${esc(ln(d.to_location_id))}`:`${c.pl}: ${esc(d.partner)} &nbsp; Location: ${esc(ln(d.location_id))}`}</p>
- <table><thead><tr><th>#</th><th>Code</th><th>Description</th><th>Qty</th>${isT?'':'<th>Price</th><th>Amount</th>'}</tr></thead><tbody>${d.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.code)}</td><td>${esc(l.desc)}</td><td>${fmt(l.qty)}</td>${isT?'':`<td>${fmt(l.price)}</td><td>${fmt(l.qty*l.price)}</td>`}</tr>`).join('')}</tbody></table>
- ${isT?'':`<h3 style="text-align:right">Total: ${fmt(dt(d))} Ks</h3>`}<p>${esc(d.note)}</p><div class="sign"><span>Prepared by</span><span>Received by</span></div>`;window.print()}
-
-/* ---------- records ---------- */
-function rec(type){const c=D[type],isT=type==='transfer',body=()=>{const q=($('#q')?.value||'').toLowerCase();
- return dd(type).filter(d=>(d.doc_no+(d.partner||'')+d.doc_date).toLowerCase().includes(q)).sort((a,b)=>b.doc_date.localeCompare(a.doc_date)||b.doc_no.localeCompare(a.doc_no)).map(d=>`<tr><td><b>${d.doc_no}</b></td><td>${d.doc_date}</td><td>${isT?esc(ln(d.location_id))+' → '+esc(ln(d.to_location_id)):esc(d.partner)}</td>${isT?'':`<td>${esc(ln(d.location_id))}</td>`}<td class="num">${d.lines.length}</td>${isT?'':`<td class="num">${fmt(dt(d))}</td>`}<td class="act"><button class="btn sm" onclick="printDoc(S.docs.find(x=>x.id==='${d.id}'))">Print</button><button class="btn sm" onclick="go('${type}','${d.id}')">Edit</button><button class="btn sm d" onclick="ddel('${type}','${d.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No records yet.</td></tr>'};
- return[c.t+' Records',`<div class="page-head"><div class="tools"><input class="input" id="q" placeholder="Search no, name or date..." oninput="$('#tb').innerHTML=window.mb()"><button class="btn primary" onclick="go('${type}')">+ New</button></div>${isT?'':`<b>${dd(type).length} records · ${fmt(sum(dd(type)))} Ks</b>`}</div>
- <div class="card"><div class="tw"><table><thead><tr><th>No.</th><th>Date</th><th>${isT?'From → To':c.pl}</th>${isT?'':'<th>Location</th>'}<th class="num">Items</th>${isT?'':'<th class="num">Total</th>'}<th></th></tr></thead><tbody id="tb">${body()}</tbody></table></div></div>`,()=>window.mb=body]}
-async function ddel(type,id){if(!confirm('Delete this document? Stock will be updated.'))return;
- const keep=S.docs;S.docs=keep.filter(d=>d.id!==id);const bad=neg();S.docs=keep;if(bad)return toast('Cannot delete, stock would go negative: '+bad);
- const {error}=await sb.from('documents').delete().eq('id',id);if(error)return toast(error.message);await load();go(type+'-r')}
-
-/* ---------- other views ---------- */
-const V={
-dash(){const td=today();let val=0,low=[];S.products.forEach(p=>{const q=tq(p.code);val+=q*p.purchase_price;if(q<=p.min_stock)low.push([p,q])});
- const k=(l,v)=>`<div class="card kpi"><div class="mu">${l}</div><div class="val">${v} Ks</div></div>`;
- return['Dashboard',`<div class="grid">${k("Today's Sales",fmt(sum(dd('sale').filter(x=>x.doc_date===td))))}${k('Total Sales',fmt(sum(dd('sale'))))}${k('Total Purchases',fmt(sum(dd('purchase'))))}${k('Stock Value',fmt(val))}</div>
- <div class="card"><div class="card-h">Low stock (${low.length})</div><div class="card-b">${low.map(([p,q])=>`<div class="row"><span>${esc(p.description)}</span><b>${q} left</b></div>`).join('')||'<div class="empty">All items are well stocked</div>'}</div></div>`]},
-stock(){const s=stock(),L=S.locations;
- return['Stock Balance',`<div class="card"><div class="tw"><table><thead><tr><th>Code</th><th>Description</th>${L.map(l=>`<th class="num">${esc(l.name)}</th>`).join('')}<th class="num">Total</th><th class="num">Value</th></tr></thead><tbody>${S.products.map(p=>{const t=tq(p.code);return`<tr class="${t<=p.min_stock?'low':''}"><td>${esc(p.code)}</td><td>${esc(p.description)}</td>${L.map(l=>`<td class="num">${fmt((s[p.code]||{})[l.id])}</td>`).join('')}<td class="num"><b>${fmt(t)}</b></td><td class="num">${fmt(t*p.purchase_price)}</td></tr>`}).join('')||'<tr><td class="empty">No products yet.</td></tr>'}</tbody></table></div></div>`]}};
-/* ===== ADD-ON v2: icons, multi-shop, credit sales, profit & loss ===== */
-let T='',MY=[],PL={f:'',t:''};
-const IC={
- dash:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
- sales:'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
- buy:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
- box:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
- card:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
- users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
- db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>'};
-const svg=k=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
-document.head.insertAdjacentHTML('beforeend','<style>.ic{width:18px;height:18px;flex-shrink:0}.brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2f6df0,#1d5fd6);display:grid;place-items:center;margin-right:10px}.brand .logo .ic{width:17px;height:17px;color:#fff}.gh{font-size:13.5px;margin-top:2px}.gh span{flex:1}.badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}.badge.ok{background:#e6f6ee;color:#0f9d58}.badge.bad{background:#fdecea;color:#d92d20}.badge.warn{background:#fff4dd;color:#c77700}body.viewer [onclick*="mform"],body.viewer [onclick*="saveDoc"],body.viewer [onclick*="mdel"],body.viewer [onclick*="ddel"],body.viewer [onclick*="receive"]{display:none!important}</style>');
-document.querySelector('.brand').innerHTML='<span class="logo">'+svg('box')+'</span>RetailPro';
-
-NAV.length=0;NAV.push(['Dashboard','dash',[['dash','Dashboard']]],
- ['Sales','sales',[['sale','New Sale Invoice'],['sale-r','Sale Records'],['recv','Unpaid / Receivables'],['sret','Sale Return'],['sret-r','Return Records'],['customers','Customers']]],
- ['Purchase','buy',[['purchase','New Purchase Invoice'],['purchase-r','Purchase Records'],['pay','Unpaid / Payables'],['pret','Purchase Return'],['pret-r','Return Records'],['suppliers','Suppliers']]],
- ['Inventory','box',[['products','Product Master'],['stock','Stock Balance'],['transfer','New Stock Transfer'],['transfer-r','Transfer Records'],['locations','Locations']]],
- ['Accounts','card',[['expenses','Expenses'],['pl','Profit & Loss']]],
- ['Shops & Team','users',[['shops','Shops & Access']]]);
-if(V.export)NAV.push(['Data','db',[['export','Data Export']]]);
-function buildNav(){$('#nav').innerHTML=NAV.map(([g,ic,it])=>it.length<2?`<button class="gh si" data-id="${it[0][0]}" onclick="go('${it[0][0]}')">${svg(ic)}<span>${g}</span></button>`:
- `<div class="grp"><button class="gh" onclick="this.parentNode.classList.toggle('open')">${svg(ic)}<span>${g}</span><i>›</i></button><div class="sub">${it.map(([id,t])=>`<button class="si" data-id="${id}" onclick="go('${id}')">${t}</button>`).join('')}</div></div>`).join('')}
-
-/* ---- multi-shop ---- */
-async function loadShops(){const {data:pr}=await sb.from('profiles').select('tenant_id,role'),{data:ts}=await sb.from('tenants').select('id,name');
- MY=(pr||[]).map(p=>({id:p.tenant_id,role:p.role,name:(ts||[]).find(t=>t.id===p.tenant_id)?.name||'Shop'}));return MY.length}
-function shopUI(){const m=MY.find(x=>x.id===T);shop=m.name;document.body.classList.toggle('viewer',m.role==='viewer');
- $('#shop').innerHTML=`<select class="input" style="padding:5px 8px;width:auto;max-width:200px" onchange="swShop(this.value)">${MY.map(x=>`<option value="${x.id}" ${x.id===T?'selected':''}>${esc(x.name)}${x.role==='owner'?'':' ('+x.role+')'}</option>`).join('')}</select>`}
-async function swShop(id){T=id;try{localStorage.setItem('shopT',id)}catch(e){}shopUI();if(await load())go('dash')}
-async function start(){const {data:{session}}=await sb.auth.getSession();if(!session)return;
- await sb.rpc('claim_invites');
- if(!await loadShops()){const {error}=await sb.rpc('create_shop',{shop_name:session.user.user_metadata.shop||'My Shop'});if(error)return err(error.message);await loadShops()}
- let sv=null;try{sv=localStorage.getItem('shopT')}catch(e){}
- T=(MY.find(m=>m.id===sv)||MY[0]).id;shopUI();
- if(!await load())return;$('#login').classList.add('hidden');$('#app').classList.remove('hidden');buildNav();go('dash')}
-async function load(){const q=t=>sb.from(t).select('*').eq('tenant_id',T);
- const r=await Promise.all([q('locations'),q('products'),q('customers'),q('suppliers'),q('expenses'),sb.from('documents').select('*,document_lines(*),payments(*)').eq('tenant_id',T)]);
- const bad=r.find(x=>x.error);if(bad){err(bad.error.message);toast(bad.error.message);return false}
- [S.locations,S.products,S.customers,S.suppliers,S.expenses]=r.slice(0,5).map(x=>x.data);
- S.docs=r[5].data.map(d=>({...d,lines:d.document_lines.map(l=>({code:l.product_code,desc:l.description,qty:+l.qty,price:+l.price,cost:+l.cost})),paid:d.payments.reduce((a,p)=>a+ +p.amount,0)}));return true}
-async function msave(id,rid){const c=M[id],o={};c.f.forEach(([k,,ty])=>o[k]=ty==='number'?+$('#f_'+k).value||0:$('#f_'+k).value.trim());
- if(!o[c.f[0][0]]||!o[c.f[1][0]])return toast('Please fill '+c.f[0][1]+' and '+c.f[1][1]);
- if(c.f[0][0]==='code'&&S[id].some(x=>x.code===o.code&&x.id!==rid))return toast('This code already exists');
- const {error}=rid?await sb.from(id).update(o).eq('id',rid):await sb.from(id).insert({...o,tenant_id:T});if(error)return toast(error.message);
- await load();mclose();toast('Saved');go(id)}
-async function newShop(){const n=$('#ns').value.trim();if(!n)return toast('Enter a shop name');const {data,error}=await sb.rpc('create_shop',{shop_name:n});if(error)return toast(error.message);await loadShops();await swShop(data);toast('Shop created')}
-async function invite(){const em=$('#iem').value.trim();if(!em)return toast('Enter an email');const {error}=await sb.rpc('invite_member',{p_tenant:$('#ish').value,p_email:em,p_role:$('#irl').value});if(error)return toast(error.message);$('#iem').value='';toast('Done. They will see this shop after they sign in.')}
-V.shops=()=>{const own=MY.filter(m=>m.role==='owner');
- return['Shops & Team',`<div class="card"><div class="card-h">My shops</div><div class="tw"><table><thead><tr><th>Shop</th><th>My role</th><th></th></tr></thead><tbody>${MY.map(m=>`<tr><td>${esc(m.name)}${m.id===T?' <span class="badge ok">current</span>':''}</td><td>${m.role}</td><td class="act"><button class="btn sm" onclick="swShop('${m.id}')">Open</button></td></tr>`).join('')}</tbody></table></div></div>
- <div class="card"><div class="card-h">Add another shop</div><div class="card-b hg"><div class="field"><label>Shop name</label><input class="input" id="ns"></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="newShop()">Create shop</button></div></div></div>
- ${own.length?`<div class="card"><div class="card-h">Give another account access to a shop</div><div class="card-b hg"><div class="field"><label>Shop</label><select class="input" id="ish">${own.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div><div class="field"><label>Their email</label><input class="input" id="iem" type="email"></div><div class="field"><label>Role</label><select class="input" id="irl"><option value="viewer">Viewer (read only)</option><option value="cashier">Cashier</option><option value="manager">Manager</option></select></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="invite()">Give access</button></div></div></div>`:''}`]};
-
-/* ---- credit sales / purchases ---- */
-const _go=go;go=function(id,arg){_go(id,arg);if((id==='sale'||id==='purchase')&&!arg){cur.paytype='cash';const g=document.querySelector('.hg');
- g&&g.insertAdjacentHTML('beforeend','<div class="field"><label>Payment</label><select class="input" onchange="cur.paytype=this.value"><option value="cash">Paid now</option><option value="credit">Credit (unpaid)</option></select></div>')}};
-async function saveDoc(){const type=cur.doc_type,isT=type==='transfer';
- if(!cur.lines.length)return toast('Add at least one item');if(isT&&cur.location_id===cur.to_location_id)return toast('From and To must be different');
- const keep=S.docs;S.docs=[...keep.filter(d=>d.id!==cur.id),cur];const bad=neg();S.docs=keep;if(bad)return toast('Not enough stock: '+bad);
- const row={tenant_id:T,doc_type:type,doc_date:cur.doc_date,partner:isT?null:cur.partner,location_id:cur.location_id,to_location_id:isT?cur.to_location_id:null,note:cur.note};
- let id=cur.id,r;const isNew=!id;
- if(id){r=await sb.from('documents').update(row).eq('id',id);if(r.error)return toast(r.error.message);await sb.from('document_lines').delete().eq('document_id',id)}
- else{row.doc_no=nextNo(type);r=await sb.from('documents').insert(row).select().single();if(r.error)return toast(r.error.message);id=r.data.id;cur.doc_no=row.doc_no}
- r=await sb.from('document_lines').insert(cur.lines.map(l=>({tenant_id:T,document_id:id,product_code:l.code,description:l.desc,qty:l.qty,price:l.price,cost:l.cost||P(l.code).purchase_price||0})));if(r.error)return toast(r.error.message);
- if(isNew&&(type==='sale'||type==='purchase')&&cur.paytype!=='credit'&&dt(cur)>0)await sb.from('payments').insert({tenant_id:T,document_id:id,amount:dt(cur),note:'Paid at invoice'});
- await load();toast('Saved '+cur.doc_no);if(confirm('Saved. Print now?'))printDoc(cur);go(type+'-r')}
-function owing(type){const isS=type==='sale',rows=dd(type).map(d=>({d,t:dt(d),p:d.paid||0})).filter(x=>x.t-x.p>0.0001).sort((a,b)=>a.d.doc_date.localeCompare(b.d.doc_date));
- return[isS?'Unpaid Sales (Receivables)':'Unpaid Purchases (Payables)',`<div class="page-head"><b>${rows.length} unpaid · ${fmt(rows.reduce((a,x)=>a+x.t-x.p,0))} Ks outstanding</b></div>
- <div class="card"><div class="tw"><table><thead><tr><th>No.</th><th>Date</th><th>${isS?'Customer':'Supplier'}</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(({d,t,p})=>`<tr><td><b>${d.doc_no}</b></td><td>${d.doc_date}</td><td>${esc(d.partner)}</td><td class="num">${fmt(t)}</td><td class="num">${fmt(p)}</td><td class="num"><b>${fmt(t-p)}</b></td><td>${p>0?'<span class="badge warn">Partial</span>':'<span class="badge bad">Unpaid</span>'}</td><td class="act"><button class="btn sm ok" onclick="receive('${d.id}')">${isS?'Receive payment':'Pay'}</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">Nothing outstanding.</td></tr>'}</tbody></table></div></div>`]}
-V.recv=()=>owing('sale');V.pay=()=>owing('purchase');
-async function receive(id){const d=S.docs.find(x=>x.id===id),bal=dt(d)-(d.paid||0);
- const a=prompt('Amount (balance '+fmt(bal)+'). Press OK to settle in full.',bal);if(a===null)return;const n=+a;if(!(n>0)||n>bal+0.0001)return toast('Enter an amount up to '+fmt(bal));
- const {error}=await sb.from('payments').insert({tenant_id:T,document_id:id,amount:n});if(error)return toast(error.message);await load();toast(n>=bal-0.0001?'Marked as paid':'Partial payment saved');go(D[d.doc_type].s<0?'recv':'pay')}
-
-/* ---- profit & loss ---- */
-V.pl=()=>{const f=PL.f||today().slice(0,8)+'01',t=PL.t||today(),inR=d=>d.doc_date>=f&&d.doc_date<=t,ds=k=>dd(k).filter(inR),
- cg=a=>a.reduce((x,d)=>x+d.lines.reduce((y,l)=>y+l.qty*(l.cost||P(l.code).purchase_price||0),0),0),
- rev=sum(ds('sale'))-sum(ds('sret')),cost=cg(ds('sale'))-cg(ds('sret')),gp=rev-cost,
- ex=S.expenses.filter(e=>e.expense_date>=f&&e.expense_date<=t).reduce((a,e)=>a+ +e.amount,0),
- ow=k=>sum(dd(k))-dd(k).reduce((a,d)=>a+(d.paid||0),0),
- r=(a,b,s)=>`<div class="row" style="${s||''}"><span>${a}</span><b>${fmt(b)} Ks</b></div>`;
- return['Profit & Loss',`<div class="page-head"><div class="tools"><input class="input" style="width:auto" type="date" value="${f}" onchange="PL.f=this.value;go('pl')"><input class="input" style="width:auto" type="date" value="${t}" onchange="PL.t=this.value;go('pl')"></div></div>
- <div class="card"><div class="card-h">${f} to ${t}</div><div class="card-b">${r('Net sales (after returns)',rev)}${r('Cost of goods sold',cost)}${r('Gross profit',gp,'font-weight:700')}${r('Expenses',ex)}${r('Net profit',gp-ex,'font-weight:700;font-size:16px')}<p class="mu" style="margin-top:10px">Gross margin: ${rev?(gp/rev*100).toFixed(1):0}%</p></div></div>
- <div class="card"><div class="card-h">Credit position (all time)</div><div class="card-b">${r('Customers owe you',ow('sale'))}${r('You owe suppliers',ow('purchase'))}</div></div>`]};
-/* ===== ADD-ON v4: delete shop, change password, forgot password ===== */
-async function delShop(){
- const id=$('#dsh').value,m=MY.find(x=>x.id===id);if(!m)return;
- if($('#dnm').value.trim()!==m.name)return toast('Type the shop name exactly to confirm');
- if(!confirm('Permanently delete "'+m.name+'" and ALL its data? This cannot be undone.'))return;
- const {error}=await sb.rpc('delete_shop',{p_tenant:id});if(error)return toast(error.message);
- await loadShops();if(!MY.some(x=>x.id===T))T=MY[0].id;shopUI();await load();toast('Shop deleted');go('shops')}
-async function changePw(){const a=$('#np1').value,b=$('#np2').value;
- if(a.length<6)return toast('Password needs 6+ characters');if(a!==b)return toast('Passwords do not match');
- const {error}=await sb.auth.updateUser({password:a});if(error)return toast(error.message);
- $('#np1').value=$('#np2').value='';toast('Password changed')}
-const _shops4=V.shops;
-V.shops=()=>{const [t,h]=_shops4(),own=MY.filter(m=>m.role==='owner');
- const del=MY.length<2?'<p class="mu">You need at least two shops before one can be deleted.</p>':!own.length?'<p class="mu">Only an owner can delete a shop.</p>':
- `<p class="mu" style="margin-bottom:12px">This deletes the shop with all its products, invoices, stock and payments. It cannot be undone. Open that shop first (top-right dropdown) and download a Full backup from Data Export.</p>
- <div class="hg"><div class="field"><label>Shop to delete</label><select class="input" id="dsh">${own.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div>
- <div class="field"><label>Type the shop name to confirm</label><input class="input" id="dnm"></div>
- <div class="field"><label>&nbsp;</label><button class="btn d" onclick="delShop()">Delete shop</button></div></div>`;
- return[t,h+`<div class="card"><div class="card-h">Change my password</div><div class="card-b hg"><div class="field"><label>New password</label><input class="input" id="np1" type="password"></div><div class="field"><label>Repeat new password</label><input class="input" id="np2" type="password"></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="changePw()">Change password</button></div></div></div>
- <div class="card"><div class="card-h" style="color:var(--bad)">Delete a shop</div><div class="card-b">${del}</div></div>`]};
-
-/* forgot password (login screen) */
-$('#go').insertAdjacentHTML('afterend','<p style="text-align:center;margin-top:12px"><a href="#" style="color:var(--pr);font-size:13px" onclick="forgotPw();return false">Forgot password?</a></p>');
-async function forgotPw(){const e=$('#em').value.trim();if(!e)return err('Enter your email above first');
- const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
- err(error?error.message:'If this email has an account, a reset link has been sent.')}
-sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){
- $('#modal').innerHTML='<div class="mbox"><h3>Set a new password</h3><div class="field"><label>New password (6+ characters)</label><input class="input" id="rp" type="password"></div><div class="mact"><button class="btn primary" onclick="rpSave()">Save</button></div></div>';
- $('#modal').classList.add('show')}});
-async function rpSave(){const p=$('#rp').value;if(p.length<6)return toast('Password needs 6+ characters');
- const {error}=await sb.auth.updateUser({password:p});if(error)return toast(error.message);mclose();toast('Password updated')}
- /* ===== ADD-ON v5: Excel export (all reports) + backup ===== */
-const X={f:'',t:''};
-function xlLoad(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const u=['/lib/xlsx/0.18.5/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];let i=0;const t=()=>{if(i>=u.length)return no();const s=document.createElement('script');s.src=u[i++];s.onload=ok;s.onerror=()=>{s.remove();t()};document.head.appendChild(s)};t()})}
-const xLoc=d=>typeof LF==='undefined'||!LF||d.location_id===LF||d.to_location_id===LF;
-const xIn=d=>(!X.f||d.doc_date>=X.f)&&(!X.t||d.doc_date<=X.t);
-const xD=(type,dated=true)=>S.docs.filter(d=>d.doc_type===type&&xLoc(d)&&(!dated||xIn(d))).sort((a,b)=>a.doc_date.localeCompare(b.doc_date)||a.doc_no.localeCompare(b.doc_no));
-const xT=d=>d.lines.reduce((a,l)=>a+l.qty*l.price,0),xP=d=>d.paid===undefined?xT(d):d.paid,xC=l=>l.cost||P(l.code).purchase_price||0;
-const xSt=d=>{const b=xT(d)-xP(d);return b<=0.0001?'Paid':xP(d)>0?'Partial':'Unpaid'};
-const xAge=d=>Math.max(0,Math.floor((Date.now()-new Date(d.doc_date))/864e5));
-const xSum=t=>[['Doc No','Date',t==='sale'?'Customer':'Supplier','Location','Items','Total','Paid','Balance','Status'],...xD(t).map(d=>[d.doc_no,d.doc_date,d.partner,ln(d.location_id),d.lines.length,xT(d),xP(d),xT(d)-xP(d),xSt(d)])];
-const xItems=t=>{const s=t==='sale';return[['Doc No','Date',s?'Customer':'Supplier','Location','Code','Description','Qty','Price','Amount',...(s?['Cost','Profit']:[])],...xD(t).flatMap(d=>d.lines.map(l=>[d.doc_no,d.doc_date,d.partner,ln(d.location_id),l.code,l.desc,l.qty,l.price,l.qty*l.price,...(s?[xC(l)*l.qty,l.qty*(l.price-xC(l))]:[])]))]};
-const xOwe=t=>[['Doc No','Date',t==='sale'?'Customer':'Supplier','Location','Total','Paid','Balance','Days outstanding'],...xD(t,false).filter(d=>xT(d)-xP(d)>0.0001).map(d=>[d.doc_no,d.doc_date,d.partner,ln(d.location_id),xT(d),xP(d),xT(d)-xP(d),xAge(d)])];
-const SH={
-'Stock Balance':()=>{const s=stock(),L=S.locations;return[['Code','Description','Unit',...L.map(l=>l.name),'Total','Purchase Price','Sale Price','Stock Value (cost)','Min Stock','Status'],
- ...S.products.map(p=>{const t=tq(p.code);return[p.code,p.description,p.unit,...L.map(l=>(s[p.code]||{})[l.id]||0),t,p.purchase_price,p.sale_price,t*p.purchase_price,p.min_stock,t<=p.min_stock?'Low stock':'OK']})]},
-'Sales Summary':()=>xSum('sale'),'Sales Items':()=>xItems('sale'),
-'Purchase Summary':()=>xSum('purchase'),'Purchase Items':()=>xItems('purchase'),
-'Returns':()=>[['Doc No','Type','Date','Partner','Location','Code','Description','Qty','Price','Amount'],...[...xD('sret'),...xD('pret')].flatMap(d=>d.lines.map(l=>[d.doc_no,D[d.doc_type].t,d.doc_date,d.partner,ln(d.location_id),l.code,l.desc,l.qty,l.price,l.qty*l.price]))],
-'Transfers':()=>[['Doc No','Date','From','To','Code','Description','Qty','Note'],...xD('transfer').flatMap(d=>d.lines.map(l=>[d.doc_no,d.doc_date,ln(d.location_id),ln(d.to_location_id),l.code,l.desc,l.qty,d.note]))],
-'Unpaid Sales':()=>xOwe('sale'),'Unpaid Purchases':()=>xOwe('purchase'),
-'Profit and Loss':()=>{const m={},g=k=>m[k]=m[k]||{r:0,c:0,e:0};
- [['sale',1],['sret',-1]].forEach(([t,sg])=>xD(t).forEach(d=>{const o=g(d.doc_date.slice(0,7));o.r+=sg*xT(d);o.c+=sg*d.lines.reduce((a,l)=>a+l.qty*xC(l),0)}));
- S.expenses.filter(e=>(!X.f||e.expense_date>=X.f)&&(!X.t||e.expense_date<=X.t)).forEach(e=>{g(e.expense_date.slice(0,7)).e+=+e.amount});
- const rows=Object.keys(m).sort().map(k=>[k,m[k].r,m[k].c,m[k].r-m[k].c,m[k].e,m[k].r-m[k].c-m[k].e]);
- return[['Month','Net sales','Cost of goods sold','Gross profit','Expenses','Net profit'],...rows,['TOTAL',...[1,2,3,4,5].map(i=>rows.reduce((a,r)=>a+r[i],0))]]},
-'Products':()=>[['Code','Description','Purchase Price','Sale Price','Unit','Min Stock'],...S.products.map(p=>[p.code,p.description,p.purchase_price,p.sale_price,p.unit,p.min_stock])],
-'Customers':()=>[['Code','Name','Phone','Address'],...S.customers.map(r=>[r.code,r.name,r.phone,r.address])],
-'Suppliers':()=>[['Code','Name','Phone','Address'],...S.suppliers.map(r=>[r.code,r.name,r.phone,r.address])],
-'Expenses':()=>[['Date','Description','Amount'],...S.expenses.map(r=>[r.expense_date,r.description,r.amount])]};
-const REP=[['Stock Balance','Stock by location, stock value, low-stock flag'],['Sales Summary','One row per sale invoice (paid / partial / unpaid)'],['Sales Items','Every item sold, with cost and profit'],['Purchase Summary','One row per purchase invoice'],['Purchase Items','Every item purchased'],['Returns','Sale and purchase returns'],['Transfers','Stock moved between locations'],['Unpaid Sales','Customers who still owe you'],['Unpaid Purchases','What you still owe suppliers'],['Profit and Loss','Monthly sales, cost, gross and net profit'],['Products','Product master'],['Customers','Customer list'],['Suppliers','Supplier list'],['Expenses','Expense list']];
-async function xlsx(names,file){try{await xlLoad()}catch(e){return toast('Excel library could not load. Check your connection and try again.')}
- const wb=XLSX.utils.book_new();
- names.forEach(n=>{const r=SH[n](),ws=XLSX.utils.aoa_to_sheet(r);ws['!cols']=r[0].map((_,i)=>({wch:Math.min(40,Math.max(8,...r.slice(0,200).map(x=>String(x[i]??'').length))+2)}));XLSX.utils.book_append_sheet(wb,ws,n)});
- XLSX.writeFile(wb,file+'_'+today()+'.xlsx');
- try{localStorage.setItem('lastExport',new Date().toLocaleString())}catch(e){}toast('Excel downloaded')}
-function xBackup(){const o={shop,exported_at:new Date().toISOString(),locations:S.locations,products:S.products,customers:S.customers,suppliers:S.suppliers,expenses:S.expenses,documents:S.docs};
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download='retailpro_backup_'+today()+'.json';
- document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
- try{localStorage.setItem('lastExport',new Date().toLocaleString())}catch(e){}toast('Backup downloaded')}
-V.export=()=>{let last='Never';try{last=localStorage.getItem('lastExport')||'Never'}catch(e){}
- return['Data Export',`<div class="card"><div class="card-h">Backup data</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Saves everything of the current shop (products, customers, invoices, payments, expenses) in one file. Last export on this device: <b>${esc(last)}</b></p>
- <button class="btn ok" onclick="xBackup()">Download backup (.json)</button></div></div>
- <div class="card"><div class="card-h">Excel reports</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Date range applies to sales, purchases, returns, transfers and profit. Stock balance and unpaid lists always show the current position. If you chose a location at the top, only that location is included.</p>
- <div class="hg"><div class="field"><label>From</label><input class="input" type="date" value="${X.f}" onchange="X.f=this.value"></div><div class="field"><label>To</label><input class="input" type="date" value="${X.t}" onchange="X.t=this.value"></div>
- <div class="field"><label>&nbsp;</label><button class="btn primary" onclick="xlsx(REP.map(r=>r[0]),'retailpro_all_reports')">All reports in one Excel</button></div></div></div>
- <div class="tw"><table><tbody>${REP.map(([n,t])=>`<tr><td><b>${n}</b><br><span class="mu">${t}</span></td><td class="act"><button class="btn sm" onclick="xlsx(['${n}'],'${n.toLowerCase().replace(/ /g,'_')}')">Excel</button></td></tr>`).join('')}</tbody></table></div></div>`]};
-if(!NAV.some(g=>g[0]==='Data'))NAV.push(['Data',typeof svg==='function'?'db':'💾',[['export','Data Export']]]);
-/* ===== ADD-ON v6: simple Excel page for customers + admin-only backup/restore ===== */
-V.export=()=>['Export to Excel',`<div class="card"><div class="card-b"><p class="mu" style="margin-bottom:12px">Download your reports as Excel files. The date range applies to sales, purchases, returns and profit. If you picked a location at the top of the page, only that location is included.</p>
- <div class="hg"><div class="field"><label>From</label><input class="input" type="date" value="${X.f}" onchange="X.f=this.value"></div><div class="field"><label>To</label><input class="input" type="date" value="${X.t}" onchange="X.t=this.value"></div>
- <div class="field"><label>&nbsp;</label><button class="btn primary" onclick="xlsx(REP.map(r=>r[0]),'retailpro_all_reports')">Download all reports</button></div></div></div>
- <div class="tw"><table><tbody>${REP.map(([n,t])=>`<tr><td><b>${n}</b><br><span class="mu">${t}</span></td><td class="act"><button class="btn sm" onclick="xlsx(['${n}'],'${n.toLowerCase().replace(/ /g,'_')}')">Excel</button></td></tr>`).join('')}</tbody></table></div></div>`];
-
-/* ---- admin tools: open the site with #admin at the end of the link ---- */
-V.admin=()=>['Admin tools',`<div class="card"><div class="card-h">Current shop: ${esc(shop)}</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Everything here applies to this shop only. Check the shop name (top right) before you start.</p>
- <button class="btn ok" onclick="xBackup()">Download backup (.json)</button></div></div>
- <div class="card"><div class="card-h">Restore from a backup file</div><div class="card-b"><p class="mu" style="margin-bottom:12px">Adds the records that are missing from this shop. It never changes or deletes existing records.</p>
- <div class="hg"><div class="field"><label>Backup file (.json)</label><input class="input" id="rf" type="file" accept=".json,application/json"></div><div class="field"><label>&nbsp;</label><button class="btn primary" onclick="rsCheck()">Check file</button></div></div><div id="rs_out"></div></div></div>`];
-
-let RB=null;
-async function rsCheck(){
- const f=$('#rf').files[0];if(!f)return toast('Choose a backup file first');
- let b;try{b=JSON.parse(await f.text())}catch(e){return toast('This file is not a valid backup')}
- if(!Array.isArray(b.documents)||!Array.isArray(b.products)||!Array.isArray(b.locations))return toast('This is not a RetailPro backup file');
- const by=(a,k)=>r=>!(a||[]).some(x=>x[k]===r[k]);
- const loc=b.locations.filter(by(S.locations,'code')),prod=b.products.filter(by(S.products,'code')),
-  cust=(b.customers||[]).filter(by(S.customers,'code')),supp=(b.suppliers||[]).filter(by(S.suppliers,'code')),
-  exp=(b.expenses||[]).filter(r=>!S.expenses.some(x=>x.expense_date===r.expense_date&&x.description===r.description&&+x.amount===+r.amount)),
-  docs=b.documents.filter(d=>!S.docs.some(x=>x.doc_type===d.doc_type&&x.doc_no===d.doc_no));
- const n=loc.length+prod.length+cust.length+supp.length+exp.length+docs.length;RB={b,loc,prod,cust,supp,exp,docs,n};
- $('#rs_out').innerHTML=`<div style="margin-top:14px"><p>Backup of <b>${esc(b.shop)}</b>, ${esc((b.exported_at||'').slice(0,10))}. Current shop: <b>${esc(shop)}</b>.</p>
- ${b.shop!==shop?'<p style="color:var(--bad);margin-top:6px">The shop names are different. Make sure this is the right shop.</p>':''}
- <div class="tw"><table><tbody>${[['Locations',loc],['Products',prod],['Customers',cust],['Suppliers',supp],['Expenses',exp],['Invoices and other documents',docs]].map(([k,a])=>`<tr><td>${k}</td><td class="num">${a.length} missing</td></tr>`).join('')}</tbody></table></div>
- ${n?`<button class="btn ok" style="margin-top:12px" id="rs_go" onclick="rsRun()">Restore ${n} missing records</button>`:'<p class="mu" style="margin-top:10px">Nothing to restore. Everything in this file already exists in this shop.</p>'}</div>`}
-async function rsRun(){
- if(!RB)return;const {b,loc,prod,cust,supp,exp,docs,n}=RB;
- if(b.shop!==shop&&!confirm('This backup is from "'+b.shop+'" but you are in "'+shop+'". Continue?'))return;
- if(!confirm('Add '+n+' missing records to "'+shop+'"? Existing records will not be changed.'))return;
- const btn=$('#rs_go');btn.disabled=true;btn.textContent='Restoring...';
- const ins=async(t,rows,sel)=>{let out=[];for(let i=0;i<rows.length;i+=300){const q=sb.from(t).insert(rows.slice(i,i+300));const r=sel?await q.select(sel):await q;if(r.error)throw new Error(t+': '+r.error.message);if(r.data)out=out.concat(r.data)}return out};
- let made=[],skipped=0;
- try{
-  await ins('locations',loc.map(r=>({tenant_id:T,code:r.code,name:r.name})));
-  await ins('products',prod.map(r=>({tenant_id:T,code:r.code,description:r.description,purchase_price:r.purchase_price,sale_price:r.sale_price,unit:r.unit,min_stock:r.min_stock})));
-  await ins('customers',cust.map(r=>({tenant_id:T,code:r.code,name:r.name,phone:r.phone,address:r.address})));
-  await ins('suppliers',supp.map(r=>({tenant_id:T,code:r.code,name:r.name,phone:r.phone,address:r.address})));
-  await ins('expenses',exp.map(r=>({tenant_id:T,expense_date:r.expense_date,description:r.description,amount:r.amount})));
-  const lr=await sb.from('locations').select('id,code').eq('tenant_id',T);if(lr.error)throw new Error(lr.error.message);
-  const byCode=Object.fromEntries(lr.data.map(l=>[l.code,l.id])),map={};b.locations.forEach(l=>map[l.id]=byCode[l.code]);
-  const ok=docs.filter(d=>map[d.location_id]&&(!d.to_location_id||map[d.to_location_id]));skipped=docs.length-ok.length;
-  made=await ins('documents',ok.map(d=>({tenant_id:T,doc_type:d.doc_type,doc_no:d.doc_no,doc_date:d.doc_date,partner:d.partner,location_id:map[d.location_id],to_location_id:d.to_location_id?map[d.to_location_id]:null,note:d.note})),'id,doc_type,doc_no');
-  const idOf={};made.forEach(m=>idOf[m.doc_type+'|'+m.doc_no]=m.id);const lines=[],pays=[];
-  ok.forEach(d=>{const id=idOf[d.doc_type+'|'+d.doc_no];if(!id)return;const ls=d.lines||[];
-   ls.forEach(l=>lines.push({tenant_id:T,document_id:id,product_code:l.code,description:l.desc,qty:l.qty,price:l.price,cost:l.cost||0}));
-   if(Array.isArray(d.payments))d.payments.forEach(p=>pays.push({tenant_id:T,document_id:id,pay_date:p.pay_date||today(),amount:p.amount,note:p.note}));
-   else if(d.doc_type==='sale'||d.doc_type==='purchase'){const t=ls.reduce((a,l)=>a+l.qty*l.price,0);if(t>0)pays.push({tenant_id:T,document_id:id,amount:t,note:'Restored (paid)'})}});
-  await ins('document_lines',lines);await ins('payments',pays);
- }catch(e){
-  if(made.length)await sb.from('documents').delete().in('id',made.map(m=>m.id));
-  btn.disabled=false;btn.textContent='Restore '+n+' missing records';return toast('Restore stopped: '+e.message)}
- RB=null;await load();$('#rs_out').innerHTML=`<p style="margin-top:14px"><b>Done.</b> ${n-skipped} records restored.${skipped?' '+skipped+' documents were skipped because their location is not in the file.':''}</p>`;toast('Restore finished')}
-
-/* admin menu appears only when the link ends with #admin */
-if(typeof IC!=='undefined')IC.tool='<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.77 3.77z"/>';
-function adminNav(){if(!NAV.some(g=>g[0]==='Admin tools'))NAV.push(['Admin tools','tool',[['admin','Backup & Restore']]]);if(!$('#app').classList.contains('hidden'))buildNav()}
-if(location.hash==='#admin')adminNav();
-addEventListener('hashchange',()=>{if(location.hash==='#admin')adminNav()});
-/* ===== ADD-ON v7: see who has access + remove access ===== */
-async function loadMembers(){
- const box=$('#mem');if(!box)return;const own=MY.filter(m=>m.role==='owner');
- if(!own.length){box.innerHTML='<p class="mu">Only a shop owner can see or remove access.</p>';return}
- let html='';
- for(const m of own){
-  const {data,error}=await sb.rpc('list_members',{p_tenant:m.id});
-  if(error){html+=`<p class="mu">${esc(m.name)}: ${esc(error.message)}</p>`;continue}
-  html+=`<div style="margin-bottom:18px"><b>${esc(m.name)}</b><div class="tw"><table><thead><tr><th>Email</th><th>Role</th><th></th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc(r.m_email)}${r.m_pending?' <span class="badge warn">invited</span>':''}</td><td>${esc(r.m_role)}</td><td class="act">${r.m_role==='owner'?'<span class="mu">owner</span>':`<button class="btn sm d" onclick="rmMember('${m.id}',${r.m_user_id?`'${r.m_user_id}'`:'null'},'${esc(r.m_email)}')">Remove access</button>`}</td></tr>`).join('')}</tbody></table></div></div>`}
- box.innerHTML=html}
-async function rmMember(tid,uid,email){
- if(!confirm('Remove access for '+email+'? They will no longer be able to open this shop.'))return;
- const {error}=await sb.rpc('remove_member',{p_tenant:tid,p_user:uid,p_email:email});
- if(error)return toast(error.message);toast('Access removed');loadMembers()}
-const _shops7=V.shops;
-V.shops=()=>{const r=_shops7();return[r[0],r[1]+'<div class="card"><div class="card-h">Who has access to my shops</div><div class="card-b" id="mem"><p class="mu">Loading...</p></div></div>',()=>{r[2]&&r[2]();loadMembers()}]};
-/* ===== ADD-ON v8: super admin - client list, access list, read-only support view ===== */
-let CL=[],SUP=null;
-const _bn8=buildNav;
-buildNav=function(){_bn8();
- if(SUP===null){SUP=false;sb.rpc('is_super').then(({data})=>{if(data!==true)return;SUP=true;
-  if(!NAV.some(g=>g[0]==='Clients'))NAV.push(['Clients',typeof svg==='function'?'users':'👥',[['clients','Client Accounts']]]);
-  const cur=document.querySelector('.si.on')?.dataset.id;_bn8();
-  if(cur)document.querySelectorAll('.si').forEach(b=>b.classList.toggle('on',b.dataset.id===cur))})}};
-V.clients=()=>['Client Accounts',`<div class="page-head"><b id="cl_n">Loading...</b><input class="input" style="max-width:240px" id="cl_q" placeholder="Search client or email..." oninput="clDraw()"></div><div class="card"><div class="tw" id="cl"></div></div>`,clLoad];
-async function clLoad(){const {data,error}=await sb.rpc('admin_clients');if(error){$('#cl').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}CL=data;clDraw()}
-function clDraw(){const q=($('#cl_q')?.value||'').toLowerCase(),rows=CL.filter(c=>(c.c_shop+' '+(c.c_owner||'')).toLowerCase().includes(q));
- $('#cl_n').textContent=CL.length+' clients'+(q?' ('+rows.length+' shown)':'');
- $('#cl').innerHTML=`<table><thead><tr><th>Client</th><th>Owner email</th><th>Created</th><th>Last login</th><th class="num">Users</th><th class="num">Products</th><th class="num">Invoices</th><th></th></tr></thead><tbody>${rows.map(c=>{const ll=c.c_last?new Date(c.c_last):null,d=ll?Math.floor((Date.now()-ll)/864e5):0;
-  return`<tr><td><b>${esc(c.c_shop)}</b></td><td>${esc(c.c_owner||'-')}</td><td>${c.c_created}</td><td>${ll?ll.toISOString().slice(0,10)+(d>30?' <span class="badge warn">'+d+'d ago</span>':''):'<span class="mu">never</span>'}</td><td class="num">${c.c_members}</td><td class="num">${fmt(c.c_products)}</td><td class="num">${fmt(c.c_docs)}</td><td class="act"><button class="btn sm" onclick="clAccess('${c.c_tenant}')">Access</button><button class="btn sm primary" onclick="clView('${c.c_tenant}')">View</button></td></tr>`}).join('')||'<tr><td colspan="8" class="empty">No clients found.</td></tr>'}</tbody></table>`}
-async function clAccess(id){const c=CL.find(x=>x.c_tenant===id),{data,error}=await sb.rpc('admin_members',{p_tenant:id});if(error)return toast(error.message);
- $('#modal').innerHTML=`<div class="mbox"><h3>${esc(c.c_shop)}: who has access</h3><div class="tw"><table><thead><tr><th>Email</th><th>Role</th><th>Last login</th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc(r.m_email)}${r.m_pending?' <span class="badge warn">invited</span>':''}</td><td>${esc(r.m_role)}</td><td>${r.m_last?String(r.m_last).slice(0,10):'-'}</td></tr>`).join('')}</tbody></table></div><div class="mact" style="margin-top:12px"><button class="btn" onclick="mclose()">Close</button></div></div>`;
- $('#modal').classList.add('show')}
-async function clView(id){const c=CL.find(x=>x.c_tenant===id);
- if(!confirm('Open "'+c.c_shop+'" in read-only support view? This visit is recorded in the access log.'))return;
- const {error}=await sb.rpc('log_support',{p_tenant:id});if(error)return toast(error.message);
- T=id;shop=c.c_shop;document.body.classList.add('viewer');
- $('#shop').innerHTML='<span class="badge warn">Support view (read only): '+esc(c.c_shop)+'</span> <button class="btn sm" onclick="location.reload()">Exit</button>';
- if(await load())go('dash')}
- /* ===== ADD-ON v10: approve / pause shops (super admin) ===== */
-loadShops=async function(){
- const {data:pr}=await sb.from('profiles').select('tenant_id,role'),{data:ts}=await sb.from('tenants').select('id,name,status');
- MY=(pr||[]).map(p=>{const t=(ts||[]).find(x=>x.id===p.tenant_id)||{};return{id:p.tenant_id,role:p.role,name:t.name||'Shop',status:t.status||'active'}});
- return MY.length};
-
-const _shopUI10=shopUI;
-shopUI=function(){
- _shopUI10();
- const m=MY.find(x=>x.id===T),st=(m&&m.status)||'active';
- if(st!=='active')document.body.classList.add('viewer');
- let b=document.getElementById('sbn');
- if(!b){b=document.createElement('div');b.id='sbn';b.style.cssText='padding:10px 20px;font-size:13px;font-weight:600;display:none';document.querySelector('.top').after(b)}
- if(st==='pending'){b.style.background='#fff4dd';b.style.color='#8a5300';b.textContent='Your account is waiting for approval. You can look around, but you can add data only after it is approved.';b.style.display='block'}
- else if(st==='paused'){b.style.background='#fdecea';b.style.color='#b42318';b.textContent='This shop is paused. You can view and download your data but cannot add or change records. Please contact your service provider.';b.style.display='block'}
- else b.style.display='none'};
-
-clDraw=function(){
- const q=($('#cl_q')?.value||'').toLowerCase(),ord={pending:0,paused:1,active:2},
-  rows=CL.filter(c=>(c.c_shop+' '+(c.c_owner||'')).toLowerCase().includes(q)).sort((a,b)=>(ord[a.c_status]??2)-(ord[b.c_status]??2)),
-  np=CL.filter(c=>c.c_status==='pending').length,
-  bd={pending:'<span class="badge warn">Waiting</span>',active:'<span class="badge ok">Active</span>',paused:'<span class="badge bad">Paused</span>'};
- $('#cl_n').innerHTML=CL.length+' clients'+(np?' &middot; <span class="badge warn">'+np+' waiting for approval</span>':'');
- $('#cl').innerHTML=`<table><thead><tr><th>Client</th><th>Status</th><th>Owner email</th><th>Created</th><th>Last login</th><th class="num">Invoices</th><th>Note</th><th></th></tr></thead><tbody>${rows.map(c=>{
-  const ll=c.c_last?new Date(c.c_last):null,d=ll?Math.floor((Date.now()-ll)/864e5):0,
-   act=c.c_status==='active'?`<button class="btn sm d" onclick="clSet('${c.c_tenant}','paused')">Pause</button>`:`<button class="btn sm ok" onclick="clSet('${c.c_tenant}','active')">${c.c_status==='pending'?'Approve':'Resume'}</button>`;
-  return`<tr><td><b>${esc(c.c_shop)}</b></td><td>${bd[c.c_status]||''}</td><td>${esc(c.c_owner||'-')}</td><td>${c.c_created}</td><td>${ll?ll.toISOString().slice(0,10)+(d>30?' <span class="badge warn">'+d+'d ago</span>':''):'<span class="mu">never</span>'}</td><td class="num">${fmt(c.c_docs)}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${esc(c.c_note||'')}">${esc(c.c_note||'')}</td><td class="act">${act}<button class="btn sm" onclick="clNote('${c.c_tenant}')">Note</button><button class="btn sm" onclick="clAccess('${c.c_tenant}')">Access</button><button class="btn sm primary" onclick="clView('${c.c_tenant}')">View</button></td></tr>`}).join('')||'<tr><td colspan="8" class="empty">No clients found.</td></tr>'}</tbody></table>`};
-
-async function clSet(id,st){
- const c=CL.find(x=>x.c_tenant===id);let note=null;
- if(st==='paused'){note=prompt('Pause "'+c.c_shop+'". Reason (only you can see this):',c.c_note||'');if(note===null)return}
- else if(!confirm((c.c_status==='pending'?'Approve':'Resume')+' "'+c.c_shop+'"?'))return;
- const {error}=await sb.rpc('admin_set_status',{p_tenant:id,p_status:st,p_note:note});
- if(error)return toast(error.message);toast('Updated');clLoad()}
-async function clNote(id){
- const c=CL.find(x=>x.c_tenant===id),n=prompt('Note about "'+c.c_shop+'" (only you can see this):',c.c_note||'');if(n===null)return;
- const {error}=await sb.rpc('admin_set_status',{p_tenant:id,p_status:c.c_status,p_note:n});
- if(error)return toast(error.message);clLoad()}
- start();
-</script></body></html>
+<script src="js/core.js"></script>
+</body></html>
