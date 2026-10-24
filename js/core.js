@@ -120,4 +120,4 @@ document.addEventListener('click',async e=>{if(e.target.id==='rps'){const p=$('#
  const {error}=await sb.auth.updateUser({password:p});if(error)return toast(error.message);mclose();toast('Password updated')}});
 $('#t_in').onclick=()=>mode(0);$('#t_up').onclick=()=>mode(1);$('#go').onclick=doAuth;$('#lo').onclick=logout;
 $('#fp').onclick=e=>{e.preventDefault();forgotPw()};$('#pw').addEventListener('keydown',e=>e.key==='Enter'&&doAuth());
-start();
+addEventListener('load',start);
