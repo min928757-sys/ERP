@@ -2,7 +2,7 @@
 const sb=supabase.createClient(location.origin+'/sb','sb_publishable_aLwnGUpyhaxJqBqmOIy6dw_3pG_Lkwg');
 const $=s=>document.querySelector(s),fmt=n=>(+n||0).toLocaleString('en-US'),R2=n=>Math.round((+n||0)*100)/100,
  esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
- today=()=>new Date().toISOString().slice(0,10);
+ today=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())};
 const S={locations:[],products:[],customers:[],suppliers:[],expenses:[],docs:[]},V={},NEED={};
 let T='',MY=[],RS=null,LF='',SUP=null;
 const D={sale:{t:'Sale Invoice',s:-1},sret:{t:'Sale Return',s:1},purchase:{t:'Purchase Invoice',s:1},pret:{t:'Purchase Return',s:-1},transfer:{t:'Stock Transfer'},sin:{t:'Stock In',s:1},sout:{t:'Stock Out',s:-1}};
